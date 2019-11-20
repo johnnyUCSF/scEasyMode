@@ -159,7 +159,7 @@ def filter_readtable(readtable,bcsmulti,bcs10x):
     filtd = filtd[filtd.multi.isin(bcsmulti)]
     filtd = filtd[filtd['cell'].isin(bcs10x)]
     ####check size and shrink to max
-    max_cells = 50000
+    max_cells = 30000
     keep = filtd.groupby(by='cell').count()
     keep.sort_values(by='umi',inplace=True)
     keep = keep.iloc[-max_cells:].index.tolist()
