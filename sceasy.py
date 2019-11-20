@@ -33,8 +33,8 @@ def read_species(human=True):
 def save(adata,filename):
     adata.write(filename+".h5ad")
 
-def read(adata,filename):
-    sc.read_h5ad(filename+".h5ad")
+def read(filename):
+    adata = sc.read_h5ad(filename+".h5ad")
     return(adata)
 #######################################################
 ####################################################### Preliminary metadata functions
