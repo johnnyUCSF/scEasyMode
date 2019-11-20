@@ -122,14 +122,14 @@ def qcgenes(adata,threshold=1000):
     plt.figure()
 
 def cellcycle(adata):
+    adata.var_names_make_unique()
     #Score cell cycle and visualize the effect:
-    cell_cycle_genes = [x.strip() for x in open('sceasy/regev_lab_cell_cycle_genes.txt')]
+    cell_cycle_genes = [x.strip() for x in open('regev_lab_cell_cycle_genes.txt')]
     s_genes = cell_cycle_genes[:43]
     g2m_genes = cell_cycle_genes[43:]
     cell_cycle_genes = [x for x in cell_cycle_genes if x in adata.var_names]
     sc.tl.score_genes_cell_cycle(adata, s_genes=s_genes, g2m_genes=g2m_genes)
-
-
+    return(adata)
     
 #######################################################
 ####################################################### Basic Filtering
