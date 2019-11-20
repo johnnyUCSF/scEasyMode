@@ -82,7 +82,7 @@ def plot_cluster_proportions(cluster_props,
     
     return fig
     
-def plot(adata,covariates=['n_counts','n_genes','mt_frac','phase','louvain','dead','sig'],sample='sample'):
+def plot(adata,covariates=['phase','louvain','dead'],sample='sample'):
     for covariate in covariates:
         cluster_props = get_cluster_proportions(adata,cluster_key=covariate,sample_key=sample)
         fig = plot_cluster_proportions(cluster_props)

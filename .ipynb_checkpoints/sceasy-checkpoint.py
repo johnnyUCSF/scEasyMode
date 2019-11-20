@@ -30,6 +30,12 @@ def read_species(human=True):
     else:
         return(sc.read_h5ad("DataBySpecies/mouse.anndata.h5ad"))
 
+def save(adata,filename):
+    adata.write(filename+".h5ad")
+
+def read(adata,filename):
+    sc.read_h5ad(filename+".h5ad")
+    return(adata)
 #######################################################
 ####################################################### Preliminary metadata functions
 #######################################################
@@ -177,8 +183,12 @@ def normalize(adata):
     ##return
     return(adata)
 
-def filters(adata,mt_thresh,min_cells):
+def filters(adata,mt_thresh,min_cells,sig_pct):
+    ###annotate dead cells in full data set
     adata = annotate_mito(adata,mt_thresh)
+    ###filter by sig from multiseq calls
+    adata = adata[adata.obs.sig>np.percentile(adata.obs.sig,sig_pct)]
+    ###filter mitochondrial high genes out and create clean dataset
     clean = filter_cells(adata,mt_thresh)
     ###filter genes
     adata = filter_genes(adata,min_cells)
@@ -189,6 +199,9 @@ def filters(adata,mt_thresh,min_cells):
     ###get hvgs
     adata = define_hvgs(adata)
     clean = define_hvgs(clean)
+    ###get shapes
+    print(adata.shape)
+    print(clean.shape)
     ###return
     return(adata,clean)
 
@@ -229,3 +242,8 @@ def cluster(adata):
     sc.tl.louvain(adata, resolution=0.5, key_added='louvain', random_state=10)
     return(adata)
 
+def densitymap(adata,sample_key='sample'):
+    sc.tl.embedding_density(adata, basis='umap', groupby=sample_key)
+    sc.pl.embedding_density(adata, basis='umap', key='umap_density_'+sample_key)
+
+        
