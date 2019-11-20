@@ -245,7 +245,7 @@ def correct_simple(filtd,sampname,plots,thresh=False,thresh_dict={}):
 #####################
 
 def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,sampname='pymulti_',
-            split=True,hamming=False,thresh=False,thresh_dict={},plots=True):
+            split=True,plots=True,hamming=False,thresh=False,thresh_dict={}):
     """ main loop, splits from fastqs and runs through cell calls """
     ###split fastqs and pickle
     os.system('mkdir pymulti')
@@ -261,5 +261,5 @@ def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,sampname='py
     ####filter readtable
     filtd = filter_readtable(readtable,bcsmulti,bcs10x)
     ####implement multiseq correction by within distribution zscores
-    correct_simple(filtd,sampname,thresh,thresh_dict,plots=plots)
+    correct_simple(filtd,sampname,plots,thresh,thresh_dict)
     
