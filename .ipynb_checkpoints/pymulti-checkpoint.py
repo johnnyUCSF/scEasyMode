@@ -158,12 +158,12 @@ def filter_readtable(readtable,bcsmulti,bcs10x):
     filtd = readtable.drop_duplicates()
     filtd = filtd[filtd.multi.isin(bcsmulti)]
     filtd = filtd[filtd['cell'].isin(bcs10x)]
-    ####check size and shrink to max
-    max_cells = 30000
-    keep = filtd.groupby(by='cell').count()
-    keep.sort_values(by='umi',inplace=True)
-    keep = keep.iloc[-max_cells:].index.tolist()
-    filtd = filtd[filtd.index.isin(keep)]
+#     ####check size and shrink to max
+#     max_cells = 30000
+#     keep = filtd.groupby(by='cell').count()
+#     keep.sort_values(by='umi',inplace=True)
+#     keep = keep.iloc[-max_cells:].index.tolist()
+#     filtd = filtd[filtd.index.isin(keep)]
     ####return
     return(filtd)
 
@@ -210,7 +210,7 @@ def correct_cutoffs(pivot,thresh_dict,cut):
                                    else pivot.loc[row.name][barcode],axis=1)
     pivot = pivot.transpose()
     
-def correct_simple(filtd,sampname,thresh=False,thresh_dict={}):
+def correct_simple(filtd,sampname,thresh=False,thresh_dict={},plots):
     """ correct by zscore distributions, plot distributions, and call cells. Saves a file with the calls. """
     ###pre run checks
     pivot = format_multi_table(filtd)
@@ -219,10 +219,10 @@ def correct_simple(filtd,sampname,thresh=False,thresh_dict={}):
     ###raw percentiles
     test = pivot+0.01
     test = test/test.sum()
-    sns.clustermap(test,cmap='Blues')
+    if plots==True: sns.clustermap(test,cmap='Blues')
     ###log2
     test = test.apply(np.log2)
-    sns.clustermap(test,cmap='Blues')
+    if plots==True: sns.clustermap(test,cmap='Blues')
     ###zscore
     test = test.transpose().apply(zscore)
     ####plot distributions
@@ -245,7 +245,7 @@ def correct_simple(filtd,sampname,thresh=False,thresh_dict={}):
 #####################
 
 def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,sampname='pymulti_',
-            split=True,hamming=False,thresh=False,thresh_dict={}):
+            split=True,hamming=False,thresh=False,thresh_dict={},plots=True):
     """ main loop, splits from fastqs and runs through cell calls """
     ###split fastqs and pickle
     os.system('mkdir pymulti')
@@ -261,5 +261,5 @@ def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,sampname='py
     ####filter readtable
     filtd = filter_readtable(readtable,bcsmulti,bcs10x)
     ####implement multiseq correction by within distribution zscores
-    correct_simple(filtd,sampname,thresh,thresh_dict)
+    correct_simple(filtd,sampname,thresh,thresh_dict,plots)
     
