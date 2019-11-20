@@ -161,7 +161,8 @@ def filter_readtable(readtable,bcsmulti,bcs10x):
     ####check size and shrink to max
     max_cells = 50000
     keep = readtable.groupby(by='cell').count()
-    keep = keep.sort_values(by='umi',inplace=True).iloc[-max_cells:].index.tolist()
+    keep = keep.sort_values(by='umi',inplace=True)
+    keep = keep.iloc[-max_cells:].index.tolist()
     filtd = filtd[filtd.index.isin(keep)]
     ####return
     return(filtd)
