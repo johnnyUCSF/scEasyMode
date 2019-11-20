@@ -179,13 +179,15 @@ def define_hvgs(adata,n_genes=3000):
     sc.pl.highly_variable_genes(adata)
     return(adata)
 
-def visualize(adata,covariates=['n_counts','n_genes','mt_frac']):
+def visualize(adata,covariates=['n_counts','n_genes','mt_frac','phase','sample','louvain']):
     ###Calculate the visualizations
     sc.pp.pca(adata, n_comps=50, use_highly_variable=True, svd_solver='arpack')
     sc.pp.neighbors(adata)
     sc.tl.umap(adata,random_state=10)
     sc.tl.diffmap(adata)
     sc.tl.draw_graph(adata)
+    ###cluster
+    adata = cluster(adata)
     ###plot
     for covariate in covariates:
         sc.pl.pca_scatter(adata, color=covariate)
@@ -198,4 +200,8 @@ def visualize(adata,covariates=['n_counts','n_genes','mt_frac']):
 def regress(adata,factors):
     sc.pp.regress_out(adata, factors)
     sc.pp.scale(adata)
+    return(adata)
+
+def cluster(adata):
+    sc.tl.louvain(adata, resolution=0.5, key_added='louvain', random_state=10)
     return(adata)
