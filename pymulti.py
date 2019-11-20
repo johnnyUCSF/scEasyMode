@@ -210,7 +210,7 @@ def correct_cutoffs(pivot,thresh_dict,cut):
                                    else pivot.loc[row.name][barcode],axis=1)
     pivot = pivot.transpose()
     
-def correct_simple(filtd,sampname,thresh=False,thresh_dict={},plots):
+def correct_simple(filtd,sampname,plots=True,thresh=False,thresh_dict={}):
     """ correct by zscore distributions, plot distributions, and call cells. Saves a file with the calls. """
     ###pre run checks
     pivot = format_multi_table(filtd)
@@ -261,5 +261,5 @@ def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,sampname='py
     ####filter readtable
     filtd = filter_readtable(readtable,bcsmulti,bcs10x)
     ####implement multiseq correction by within distribution zscores
-    correct_simple(filtd,sampname,thresh,thresh_dict,plots)
+    correct_simple(filtd,sampname,thresh,thresh_dict,plots=plots)
     
