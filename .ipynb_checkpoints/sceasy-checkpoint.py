@@ -33,8 +33,8 @@ def read_species(human=True):
 def save(adata,filename):
     adata.write(filename+".h5ad")
 
-def read(adata,filename):
-    sc.read_h5ad(filename+".h5ad")
+def read(filename):
+    adata = sc.read_h5ad(filename+".h5ad")
     return(adata)
 #######################################################
 ####################################################### Preliminary metadata functions
@@ -60,8 +60,7 @@ def overlay_meta(adata,LMOfile):
 def get_LMOfile(LMOfile):
     """ read in LMOfile and turn into dictionary. 
         using the multiseq barcode sequence as the keys. """
-    bcfile = '../multi_raw/LMOlist_L0027.csv'
-    bcsmulti = pd.read_csv(bcfile,sep=',',index_col=0,header=None)
+    bcsmulti = pd.read_csv(LMOfile,sep=',',index_col=0,header=None)
     bcsmulti.columns = ['multi']
     return(bcsmulti.to_dict()['multi'])
 
@@ -130,7 +129,7 @@ def qcgenes(adata,threshold=1000):
 def cellcycle(adata):
     adata.var_names_make_unique()
     #Score cell cycle and visualize the effect:
-    cell_cycle_genes = [x.strip() for x in open('regev_lab_cell_cycle_genes.txt')]
+    cell_cycle_genes = [x.strip() for x in open('scEasyMode/regev_lab_cell_cycle_genes.txt')]
     s_genes = cell_cycle_genes[:43]
     g2m_genes = cell_cycle_genes[43:]
     cell_cycle_genes = [x for x in cell_cycle_genes if x in adata.var_names]
@@ -183,13 +182,13 @@ def normalize(adata):
     ##return
     return(adata)
 
-def filters(adata,mt_thresh,min_cells,sig_pct):
+def filters(adata,mt_thresh,min_cells,sig_pct,min_counts,min_genes):
     ###annotate dead cells in full data set
     adata = annotate_mito(adata,mt_thresh)
     ###filter by sig from multiseq calls
     adata = adata[adata.obs.sig>np.percentile(adata.obs.sig,sig_pct)]
     ###filter mitochondrial high genes out and create clean dataset
-    clean = filter_cells(adata,mt_thresh)
+    clean = filter_cells(adata,mt_thresh,min_counts=min_counts,min_genes=min_genes)
     ###filter genes
     adata = filter_genes(adata,min_cells)
     clean = filter_genes(clean,min_cells)
