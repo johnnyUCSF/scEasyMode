@@ -210,7 +210,7 @@ def correct_cutoffs(pivot,thresh_dict,cut):
                                    else pivot.loc[row.name][barcode],axis=1)
     pivot = pivot.transpose()
     
-def correct_simple(filtd,sampname,plots=True,thresh=False,thresh_dict={}):
+def correct_simple(filtd,sampname,plots,thresh=False,thresh_dict={}):
     """ correct by zscore distributions, plot distributions, and call cells. Saves a file with the calls. """
     ###pre run checks
     pivot = format_multi_table(filtd)
