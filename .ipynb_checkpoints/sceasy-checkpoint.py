@@ -130,7 +130,15 @@ def cellcycle(adata):
     cell_cycle_genes = [x for x in cell_cycle_genes if x in adata.var_names]
     sc.tl.score_genes_cell_cycle(adata, s_genes=s_genes, g2m_genes=g2m_genes)
     return(adata)
-    
+
+def qc_all(adata):
+    ###qc
+    adata = qccheck(adata)
+    adata = cellcycle(adata)
+    qccounts(adata)
+    qcgenes(adata)
+    return(adata)
+
 #######################################################
 ####################################################### Basic Filtering
 #######################################################
@@ -169,15 +177,30 @@ def normalize(adata):
     ##return
     return(adata)
 
-#######################################################
-####################################################### Clustering and visualization
-#######################################################
+def filters(adata,mt_thresh,min_cells):
+    adata = annotate_mito(adata,mt_thresh)
+    clean = filter_cells(adata,mt_thresh)
+    ###filter genes
+    adata = filter_genes(adata,min_cells)
+    clean = filter_genes(clean,min_cells)
+    ###normalize
+    adata = normalize(adata)
+    clean = normalize(clean)
+    ###get hvgs
+    adata = define_hvgs(adata)
+    clean = define_hvgs(clean)
+    ###return
+    return(adata,clean)
 
 def define_hvgs(adata,n_genes=3000):
     sc.pp.highly_variable_genes(adata, flavor='cell_ranger', n_top_genes=n_genes)
     print('\n','Number of highly variable genes: {:d}'.format(np.sum(adata.var['highly_variable'])))
     sc.pl.highly_variable_genes(adata)
     return(adata)
+
+#######################################################
+####################################################### Clustering and visualization
+#######################################################
 
 def visualize(adata,covariates=['n_counts','n_genes','mt_frac','phase','sample','louvain']):
     ###Calculate the visualizations
