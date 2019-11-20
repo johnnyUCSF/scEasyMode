@@ -202,7 +202,7 @@ def define_hvgs(adata,n_genes=3000):
 ####################################################### Clustering and visualization
 #######################################################
 
-def visualize(adata,covariates=['n_counts','n_genes','mt_frac','phase','sample','louvain']):
+def visualize(adata,covariates=['n_counts','n_genes','mt_frac','phase','sample','louvain','dead','sig']):
     ###Calculate the visualizations
     sc.pp.pca(adata, n_comps=50, use_highly_variable=True, svd_solver='arpack')
     sc.pp.neighbors(adata)
@@ -228,3 +228,4 @@ def regress(adata,factors):
 def cluster(adata):
     sc.tl.louvain(adata, resolution=0.5, key_added='louvain', random_state=10)
     return(adata)
+
