@@ -60,8 +60,7 @@ def overlay_meta(adata,LMOfile):
 def get_LMOfile(LMOfile):
     """ read in LMOfile and turn into dictionary. 
         using the multiseq barcode sequence as the keys. """
-    bcfile = '../multi_raw/LMOlist_L0027.csv'
-    bcsmulti = pd.read_csv(bcfile,sep=',',index_col=0,header=None)
+    bcsmulti = pd.read_csv(LMOfile,sep=',',index_col=0,header=None)
     bcsmulti.columns = ['multi']
     return(bcsmulti.to_dict()['multi'])
 
