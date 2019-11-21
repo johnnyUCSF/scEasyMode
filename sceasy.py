@@ -103,9 +103,10 @@ def qcplots(adata):
         sc.pl.scatter(adata[adata.obs['n_counts']<5000], 'n_counts', 'n_genes', color=color)
         sc.pl.scatter(adata[adata.obs['n_counts']<2500], 'n_counts', 'n_genes', color=color)
         
-def qccheck(adata,MT_prefix='MT-'):
+def qccheck(adata,suppress_plots,MT_prefix='MT-'):
     adata = qcstats(adata,MT_prefix)
-    qcplots(adata)
+    if suppress_plots == False:
+        qcplots(adata)
     return(adata)
 
 def qccounts(adata,threshold=4000):
@@ -136,12 +137,14 @@ def cellcycle(adata):
     sc.tl.score_genes_cell_cycle(adata, s_genes=s_genes, g2m_genes=g2m_genes)
     return(adata)
 
-def qc_all(adata):
+def qc_all(adata,suppress_plots=False):
     ###qc
-    adata = qccheck(adata)
+    adata = qccheck(adata,suppress_plots)
     adata = cellcycle(adata)
-    qccounts(adata)
-    qcgenes(adata)
+    ###plot
+    if suppress_plots == False:
+        qccounts(adata)
+        qcgenes(adata)
     return(adata)
 
 #######################################################
@@ -214,21 +217,25 @@ def define_hvgs(adata,n_genes=3000):
 ####################################################### Clustering and visualization
 #######################################################
 
-def visualize(adata,covariates=['n_counts','n_genes','mt_frac','phase','sample','louvain','dead','sig']):
+def visualize(adata,covariates=['n_counts','n_genes','mt_frac','phase','sample','louvain','dead','sig','batch'],bbknn=False,suppress_plots=False):
     ###Calculate the visualizations
     sc.pp.pca(adata, n_comps=50, use_highly_variable=True, svd_solver='arpack')
-    sc.pp.neighbors(adata)
+    if bbknn == True:
+        sc.external.pp.bbknn(adata,batch_key='batch',set_op_mix_ratio=0.1,trim=100)
+    else:
+        sc.pp.neighbors(adata)
     sc.tl.umap(adata,random_state=10)
     sc.tl.diffmap(adata)
     sc.tl.draw_graph(adata)
     ###cluster
     adata = cluster(adata)
     ###plot
-    for covariate in covariates:
-        sc.pl.pca_scatter(adata, color=covariate)
-        sc.pl.umap(adata, color=covariate)
-        sc.pl.diffmap(adata, color=covariate, components=['1,2','1,3'])
-        sc.pl.draw_graph(adata, color=covariate)
+    if suppress_plots == False:
+        for covariate in covariates:
+            sc.pl.pca_scatter(adata, color=covariate)
+            sc.pl.umap(adata, color=covariate)
+            sc.pl.diffmap(adata, color=covariate, components=['1,2','1,3'])
+            sc.pl.draw_graph(adata, color=covariate)
     ###return
     return(adata)
 
