@@ -217,7 +217,7 @@ def define_hvgs(adata,n_genes=3000):
 ####################################################### Clustering and visualization
 #######################################################
 
-def visualize(adata,covariates=['n_counts','n_genes','mt_frac','phase','sample','louvain','dead','sig','batch'],bbknn=False,suppress_plots=False):
+def visualize(adata,covariates=['n_counts','n_genes','mt_frac','phase','sample','louvain','dead','sig'],bbknn=False,suppress_plots=False):
     ###Calculate the visualizations
     sc.pp.pca(adata, n_comps=50, use_highly_variable=True, svd_solver='arpack')
     if bbknn == True:
