@@ -185,7 +185,7 @@ def normalize(adata):
     ##return
     return(adata)
 
-def filters(adata,mt_thresh,min_cells,sig_pct,min_counts,min_genes):
+def filters(adata,mt_thresh,min_cells,sig_pct,min_counts,min_genes,get_hvgs=True):
     ###annotate dead cells in full data set
     adata = annotate_mito(adata,mt_thresh)
     ###filter by sig from multiseq calls
@@ -199,8 +199,9 @@ def filters(adata,mt_thresh,min_cells,sig_pct,min_counts,min_genes):
     adata = normalize(adata)
     clean = normalize(clean)
     ###get hvgs
-    adata = define_hvgs(adata)
-    clean = define_hvgs(clean)
+    if get_hvgs == True:
+        adata = define_hvgs(adata)
+        clean = define_hvgs(clean)
     ###get shapes
     print(adata.shape)
     print(clean.shape)
