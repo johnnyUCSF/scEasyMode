@@ -256,10 +256,10 @@ def visualize(adata,covariates=['n_counts','n_genes','mt_frac','phase','sample',
     ###plot
     if suppress_plots == False:
         for covariate in covariates:
-            sc.pl.pca_scatter(adata, color=covariate)
-            sc.pl.umap(adata, color=covariate)
-            sc.pl.diffmap(adata, color=covariate, components=['1,2','1,3'])
-            sc.pl.draw_graph(adata, color=covariate)
+            sc.pl.pca_scatter(adata, color=covariate,palette=sc.pl.palettes.vega_20)
+            sc.pl.umap(adata, color=covariate,palette=sc.pl.palettes.vega_20)
+            sc.pl.diffmap(adata, color=covariate, components=['1,2','1,3'],palette=sc.pl.palettes.vega_20)
+            sc.pl.draw_graph(adata, color=covariate,palette=sc.pl.palettes.vega_20)
     ###return
     return(adata)
 
