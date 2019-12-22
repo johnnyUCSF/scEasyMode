@@ -241,7 +241,7 @@ def define_hvgs(adata,n_genes=3000):
 ####################################################### Clustering and visualization
 #######################################################
 
-def visualize(adata,covariates=['n_counts','n_genes','mt_frac','phase','sample','louvain','dead','sig'],bbknn=False,suppress_plots=False):
+def visualize(adata,covariates=['n_counts','n_genes','mt_frac','phase','sample','louvain','dead','sig'],res=0.5,bbknn=False,suppress_plots=False):
     ###Calculate the visualizations
     sc.pp.pca(adata, n_comps=50, use_highly_variable=True, svd_solver='arpack')
     if bbknn == True:
@@ -252,7 +252,7 @@ def visualize(adata,covariates=['n_counts','n_genes','mt_frac','phase','sample',
     sc.tl.diffmap(adata)
     sc.tl.draw_graph(adata)
     ###cluster
-    adata = cluster(adata)
+    adata = cluster(adata,res)
     ###plot
     if suppress_plots == False:
         for covariate in covariates:
@@ -268,12 +268,47 @@ def regress(adata,factors):
     sc.pp.scale(adata)
     return(adata)
 
-def cluster(adata):
-    sc.tl.louvain(adata, resolution=0.5, key_added='louvain', random_state=10)
+def cluster(adata,res):
+    sc.tl.louvain(adata, resolution=res, key_added='louvain', random_state=10)
     return(adata)
 
 def densitymap(adata,sample_key='sample'):
     sc.tl.embedding_density(adata, basis='umap', groupby=sample_key)
     sc.pl.embedding_density(adata, basis='umap', key='umap_density_'+sample_key)
 
-        
+#######################################################
+####################################################### Demuxlet correction
+#######################################################
+
+
+def correct_demuxlet(adata,cutoff=0.7,label='cell_type'):
+    """ This function corrects integrates demuxlet and transcriptome calls by assigning a cell type to each cluster in transcriptome space.
+        It uses cutoffs as defined in parameters which refers to proportion of max cell types. """
+    cutoff = 0.7
+    celldict = {}
+    ###
+    for clust in set(adata.obs.louvain):
+        ##get cluster alone first
+        clustdf = adata[adata.obs.louvain==clust].obs
+        ##calculate proportions
+        props = clustdf.groupby(label).count()['barcode']/(len(clustdf))
+        ##see if majority based on cutoff
+        majorcell = props[props>cutoff].index.tolist() 
+        ##change all cell_type values to the most abundant value
+        cells = clustdf.index.tolist()
+        if len(majorcell) == 1:
+            ##add to dictionary
+            celldict[clust] = majorcell[0]
+        ##print a log
+        print('louvain cluster ',clust,' has a majority cell type of ',majorcell)
+    ###replace cell type calls
+    adata.obs[label] = adata.obs.apply(lambda row: replace_celltypes(celldict,row,label),axis=1)
+    ###return object
+    return(adata)
+    
+def replace_celltypes(celldict,row,label):
+    """ Replaces cell type with max celltype in anndata object, but preserves original call if no max cell type is found. """
+    if row['louvain'] in celldict:
+        return(celldict[row['louvain']])
+    else:
+        return(row[label])
