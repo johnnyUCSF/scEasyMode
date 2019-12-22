@@ -55,6 +55,8 @@ def overlay_meta(adata,LMOfile):
     adata.obs['call'] = adata.obs.apply(lambda row: call[row.barcode],axis=1)
     ###write sample name into .obs
     adata.obs['sample'] = adata.obs.apply(lambda row: LMOdict[row.call],axis=1)
+    ###return
+    return(adata)
 
 def overlay_custom_meta(adata,METAfile,label):
     """ Overlays the metadata specified in METAfile. Note that it must have the barcodes as colname = 'BARCODE' """
@@ -66,6 +68,8 @@ def overlay_custom_meta(adata,METAfile,label):
     adata = adata[adata.obs.barcode.isin(mdict.keys())]
     ###write into .obs
     adata.obs[label] = adata.obs.apply(lambda row: mdict[row.barcode],axis=1)
+    ###return
+    return(adata)
 
 def format_demuxlet(DEMUXfile):
     """ formats the demuxlet file to two columns. """
