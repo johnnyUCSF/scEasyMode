@@ -41,6 +41,7 @@ def read(filename):
 #######################################################
     
 def overlay_meta(adata,LMOfile):
+    """ Automatically overlays the metadata from multiseq to the single cell dataset. """
     ###get barcodes
     adata.obs['barcode'] = adata.obs.index.str[:-2]
     ###get dictionaries of metadata
@@ -54,8 +55,26 @@ def overlay_meta(adata,LMOfile):
     adata.obs['call'] = adata.obs.apply(lambda row: call[row.barcode],axis=1)
     ###write sample name into .obs
     adata.obs['sample'] = adata.obs.apply(lambda row: LMOdict[row.call],axis=1)
-    ###return
-    return(adata)
+
+def overlay_custom_meta(adata,METAfile,label):
+    """ Overlays the metadata specified in METAfile. Note that it must have the barcodes as colname = 'BARCODE' """
+    ###read file
+    mfile = pd.read_csv(METAfile,sep=',',index_col=0)
+    ###convert to dictionary
+    mdict = mfile.to_dict()[mfile.columns[0]]
+    ###check indices
+    adata = adata[adata.obs.barcode.isin(mdict.keys())]
+    ###write into .obs
+    adata.obs[label] = adata.obs.apply(lambda row: mdict[row.barcode],axis=1)
+
+def format_demuxlet(DEMUXfile):
+    """ formats the demuxlet file to two columns. """
+    demux = pd.read_csv(DEMUXfile,sep='\t')
+    demux.index = demux.BARCODE.str[:-2]
+    demux = demux[['SNG.1ST']]
+    fname = DEMUXfile+".csv"
+    demux.to_csv(fname,sep=',')
+    print('Your file has been saved as:',fname)
     
 def get_LMOfile(LMOfile):
     """ read in LMOfile and turn into dictionary. 
