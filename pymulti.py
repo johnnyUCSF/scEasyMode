@@ -210,7 +210,7 @@ def correct_cutoffs(pivot,thresh_dict,cut):
                                    else pivot.loc[row.name][barcode],axis=1)
     pivot = pivot.transpose()
     
-def correct_simple(filtd,sampname,plots,thresh=False,thresh_dict={}):
+def correct_simple(filtd,sampname,plots=True,thresh=False,pct_only=False,thresh_dict={}):
     """ correct by zscore distributions, plot distributions, and call cells. Saves a file with the calls. """
     ###pre run checks
     pivot = format_multi_table(filtd)
@@ -220,11 +220,15 @@ def correct_simple(filtd,sampname,plots,thresh=False,thresh_dict={}):
     test = pivot+0.01
     test = test/test.sum()
     if plots==True: sns.clustermap(test,cmap='Blues')
-    ###log2
-    test = test.apply(np.log2)
-    if plots==True: sns.clustermap(test,cmap='Blues')
-    ###zscore
-    test = test.transpose().apply(zscore)
+    ###option to use pct only if thresholding
+    if pct_only != True:
+        ###log2
+        test = test.apply(np.log2)
+        if plots==True: sns.clustermap(test,cmap='Blues')
+        ###zscore
+        test = test.transpose().apply(zscore)
+    else:
+        test = test.transpose()
     ####plot distributions
     for pop in list(test.columns):
         plt.figure()
@@ -245,7 +249,7 @@ def correct_simple(filtd,sampname,plots,thresh=False,thresh_dict={}):
 #####################
 
 def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,sampname='pymulti_',
-            split=True,plots=True,hamming=False,thresh=False,thresh_dict={}):
+            split=True,plots=True,hamming=False,thresh=False,pct_only=False,thresh_dict={}):
     """ main loop, splits from fastqs and runs through cell calls """
     ###split fastqs and pickle
     os.system('mkdir pymulti')
@@ -261,5 +265,5 @@ def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,sampname='py
     ####filter readtable
     filtd = filter_readtable(readtable,bcsmulti,bcs10x)
     ####implement multiseq correction by within distribution zscores
-    correct_simple(filtd,sampname,plots,thresh,thresh_dict)
+    correct_simple(filtd,sampname,plots,thresh,pct_only,thresh_dict)
     

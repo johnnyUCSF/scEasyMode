@@ -40,13 +40,13 @@ def read(filename):
 ####################################################### Preliminary metadata functions
 #######################################################
     
-def overlay_meta(adata,LMOfile):
+def overlay_meta(adata,LMOfile,sampname='pymulti_'):
     """ Automatically overlays the metadata from multiseq to the single cell dataset. """
     ###get barcodes
     adata.obs['barcode'] = adata.obs.index.str[:-2]
     ###get dictionaries of metadata
     LMOdict = get_LMOfile(LMOfile)
-    sig,call = get_pymulti()
+    sig,call = get_pymulti(sampname)
     ###check indices
     adata = adata[adata.obs.barcode.isin(sig.keys())]
     adata = adata[adata.obs.barcode.isin(call.keys())]
@@ -87,10 +87,10 @@ def get_LMOfile(LMOfile):
     bcsmulti.columns = ['multi']
     return(bcsmulti.to_dict()['multi'])
 
-def get_pymulti():
+def get_pymulti(sampname):
     """ read in python multi seq file and convert to two dictionaries, one for significance and one for call.
         using the cell barcodes as the keys. """
-    bcs = pd.read_csv('pymulti/pymulti__calls.tsv',sep='\t',index_col=0)
+    bcs = pd.read_csv('pymulti/'+sampname+'_calls.tsv',sep='\t',index_col=0)
     bcs = bcs[['sig','call']]
     sig = bcs.sig.to_dict()
     call = bcs.call.to_dict()
@@ -237,6 +237,10 @@ def define_hvgs(adata,n_genes=3000):
     sc.pl.highly_variable_genes(adata)
     return(adata)
 
+def filter_by_sig(adata,sig_pct):
+    adata = adata[adata.obs.sig>np.percentile(adata.obs.sig,sig_pct)]
+    return(adata)
+
 #######################################################
 ####################################################### Clustering and visualization
 #######################################################
@@ -299,10 +303,14 @@ def correct_demuxlet(adata,cutoff=0.7,label='cell_type'):
         if len(majorcell) == 1:
             ##add to dictionary
             celldict[clust] = majorcell[0]
+        else:
+            celldict[clust] = 'delete'
         ##print a log
         print('louvain cluster ',clust,' has a majority cell type of ',majorcell)
     ###replace cell type calls
     adata.obs[label] = adata.obs.apply(lambda row: replace_celltypes(celldict,row,label),axis=1)
+    ###remove cells flagged as non confident calls (probable doublets)
+    adata = adata[adata.obs[label]!='delete']
     ###return object
     return(adata)
     
