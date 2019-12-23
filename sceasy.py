@@ -312,3 +312,54 @@ def replace_celltypes(celldict,row,label):
         return(celldict[row['louvain']])
     else:
         return(row[label])
+
+#######################################################
+####################################################### MixNSeq tools
+#######################################################
+
+def calc_proportions(adata,label='cell_type',treatment='treatment',vehicle='DMSO'):
+    ##calculate proportion by group
+    ####get lengths of each treatment dataset
+    sizedict={}
+    for drug in set(adata.obs[treatment]):
+        onedf = adata[adata.obs[treatment]==drug].obs
+        sizedict[drug] = len(onedf)
+    ####calculate relative proportions by cell line to get fitness relative to vehicle
+    ##save data to results
+    results = pd.DataFrame()
+    for celltype in set(adata.obs[label]):
+        ##get cluster alone first
+        onedf = adata[adata.obs[label]==celltype].obs
+        ##calculate proportions
+        props = pd.DataFrame(onedf.groupby([treatment]).count()['barcode'])
+        props = pd.DataFrame(props.apply(lambda row: row['barcode']/sizedict[row.name],axis=1))
+        ##write into results dataframe
+        results[celltype] = props[0]
+    ###divide everything by the vehicle
+    results = results.transpose()
+    results = results.div(results[vehicle],axis=0)
+    return results
+    
+def plot_fitness(fitness):
+    ###plot fitness scores
+    palette = sns.color_palette("Purples_d",n_colors=int(len(fitness)*1.3))
+    ###
+    for treatment in set(fitness.columns):
+        ###format
+        subset = pd.DataFrame(fitness[treatment])
+        subset.sort_values(by=treatment,inplace=True)
+        subset['cell type'] = subset.index
+        ###plot
+        sns.set(style="white")
+        plt.figure(figsize=(10,6))
+        sns.barplot(x='cell type',y=treatment, data=subset,palette=palette)
+        ##formatting
+        plt.title('Fitness by Cell Line after '+treatment+' treatment')
+        plt.xticks(rotation=90)
+        plt.ylabel('Fitness')
+        plt.xlabel('Cell Type')
+        plt.tight_layout()
+        plt.savefig('figures/'+treatment+'.pdf',dpi=200)
+    
+    
+    
