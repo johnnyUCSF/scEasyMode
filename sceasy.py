@@ -208,11 +208,12 @@ def normalize(adata):
     ##return
     return(adata)
 
-def filters(adata,mt_thresh,min_cells,sig_pct,min_counts,max_counts,min_genes,get_hvgs=True):
+def filters(adata,mt_thresh,min_cells,min_counts,max_counts,min_genes,get_hvgs=True,sig_pct=False):
     ###annotate dead cells in full data set
     adata = annotate_mito(adata,mt_thresh)
     ###filter by sig from multiseq calls
-    adata = adata[adata.obs.sig>np.percentile(adata.obs.sig,sig_pct)]
+    if sig_pct != False:
+        adata = adata[adata.obs.sig>np.percentile(adata.obs.sig,sig_pct)]
     ###filter mitochondrial high genes out and create clean dataset
     clean = filter_cells(adata,mt_thresh,min_counts=min_counts,max_counts=max_counts,min_genes=min_genes)
     ###filter genes
