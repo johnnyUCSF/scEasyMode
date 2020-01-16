@@ -286,7 +286,7 @@ def classify(df,label,newlabel,classifier):
     return(df)
     
 def lambda_classify(search,classifier):
-    if search == classifier:
+    if search in classifier:
         return('yes')
     else:
         return('no')
