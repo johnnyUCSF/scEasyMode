@@ -281,6 +281,16 @@ def densitymap(adata,sample_key='sample'):
     sc.tl.embedding_density(adata, basis='umap', groupby=sample_key)
     sc.pl.embedding_density(adata, basis='umap', key='umap_density_'+sample_key)
 
+def classify(df,label,newlabel,classifier):
+    df[newlabel] = df.apply(lambda row: lambda_classify(row[label],classifier) ,axis=1)
+    return(df)
+    
+def lambda_classify(search,classifier):
+    if search == classifier:
+        return('yes')
+    else:
+        return('no')
+
 #######################################################
 ####################################################### Demuxlet correction
 #######################################################
