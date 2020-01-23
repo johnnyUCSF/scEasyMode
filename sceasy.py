@@ -291,6 +291,26 @@ def lambda_classify(search,classifier):
     else:
         return('no')
 
+def metacell_bylabel(scobject,label,zscore=True):
+    clusters = []
+    metacells = []
+    ###extract metacells
+    for cluster in set(scobject.obs[label]):
+        ##get cluster
+        clust = scobject[scobject.obs[label]==cluster].X.todense()
+        ##average to metacell
+        clust = clust.mean(axis=0)
+        ##append to index
+        metacells.append(pd.DataFrame(clust).iloc[0].tolist())
+        clusters.append(cluster)
+    ###format
+    merged = pd.DataFrame(metacells,index=clusters,columns=scobject.var.index.tolist())
+    ###zscore
+    if zscore == True:
+        merged = pd.DataFrame(stats.zscore(merged),index=clusters,columns=scobject.var.index.tolist())
+    ###return
+    return(merged)    
+
 #######################################################
 ####################################################### Demuxlet correction
 #######################################################
