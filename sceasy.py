@@ -358,28 +358,51 @@ def replace_celltypes(celldict,row,label):
 ####################################################### MixNSeq tools
 #######################################################
 
-def calc_proportions(adata,label='cell_type',treatment='treatment',vehicle='DMSO'):
+def calc_proportions(adata,label='cell_type',treatment='treatment',vehicle='DMSO',deseq_norm=False):
     ##calculate proportion by group
     ####get lengths of each treatment dataset
     sizedict={}
     for drug in set(adata.obs[treatment]):
         onedf = adata[adata.obs[treatment]==drug].obs
         sizedict[drug] = len(onedf)
-    ####calculate relative proportions by cell line to get fitness relative to vehicle
-    ##save data to results
-    results = pd.DataFrame()
-    for celltype in set(adata.obs[label]):
-        ##get cluster alone first
-        onedf = adata[adata.obs[label]==celltype].obs
-        ##calculate proportions
-        props = pd.DataFrame(onedf.groupby([treatment]).count()['barcode'])
-        props = pd.DataFrame(props.apply(lambda row: row['barcode']/sizedict[row.name],axis=1))
-        ##write into results dataframe
-        results[celltype] = props[0]
-    ###divide everything by the vehicle
-    results = results.transpose()
-    results = results.div(results[vehicle],axis=0)
-    return results
+    ####deseq normalize
+    if deseq_norm==True:
+        results = pd.DataFrame()
+        ##count cells by type
+        for celltype in set(adata.obs[label]):
+            ##get cluster alone first
+            onedf = adata[adata.obs[label]==celltype].obs
+            ##count
+            props = pd.DataFrame(onedf.groupby([treatment]).count()['barcode'])
+            ##append
+            results[celltype] = props['barcode']
+        ##create pseudo reference
+        pseudo = gmean(results.iloc[:,:],axis=0)
+        ##calculate ratios
+        tmp = results/pseudo
+        ratios = tmp.median(axis=1)
+        ##divide
+        results = results.transpose()/ratios.tolist()
+        ###divide everything by the vehicle
+        results = results.div(results[vehicle],axis=0)
+    ####regular normalization
+    else:
+        ####calculate relative proportions by cell line to get fitness relative to vehicle
+        ##save data to results
+        results = pd.DataFrame()
+        for celltype in set(adata.obs[label]):
+            ##get cluster alone first
+            onedf = adata[adata.obs[label]==celltype].obs
+            ##calculate proportions
+            props = pd.DataFrame(onedf.groupby([treatment]).count()['barcode'])
+            props = pd.DataFrame(props.apply(lambda row: row['barcode']/sizedict[row.name],axis=1))
+            ##write into results dataframe
+            results[celltype] = props[0]
+        ###divide everything by the vehicle
+        results = results.transpose()
+        results = results.div(results[vehicle],axis=0)
+        ###
+        return results
     
 def plot_fitness(fitness):
     ###plot fitness scores
