@@ -385,6 +385,7 @@ def calc_proportions(adata,label='cell_type',treatment='treatment',vehicle='DMSO
         results = results.transpose()/ratios.tolist()
         ###divide everything by the vehicle
         results = results.div(results[vehicle],axis=0)
+        return(results)
     ####regular normalization
     else:
         ####calculate relative proportions by cell line to get fitness relative to vehicle
