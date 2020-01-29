@@ -18,7 +18,7 @@ import numpy as np
 import seaborn as sns
 import scanpy as sc
 from scipy import stats
-
+from scipy.stats.mstats import gmean
 #####################
 #####################
 
