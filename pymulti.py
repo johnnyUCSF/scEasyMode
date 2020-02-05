@@ -257,8 +257,9 @@ def correct_median(filtd,sampname,med_factor,plots=True):
     testmed = testmed/testmed.sum()
     ###formatting
     testmed = testmed.fillna(0)
-    ###plot
-    sns.clustermap(testmed,cmap='Blues')
+    if plots == True:
+        ###plot
+        sns.clustermap(testmed,cmap='Blues')
     ###formatting
     test = testmed.transpose()
     ####get significance value and call cells
