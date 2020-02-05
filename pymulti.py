@@ -244,7 +244,7 @@ def correct_simple(filtd,sampname,plots=True,thresh=False,pct_only=False,thresh_
     ###return in the event of multiple iterations of corrections
     return(test)
 
-def correct_median(filtd,sampname,plots=True,med_factor):
+def correct_median(filtd,sampname,med_factor,plots=True):
     ###pre run checks
     pivot = format_multi_table(filtd)
     check_pivot(pivot,sampname)
@@ -257,7 +257,6 @@ def correct_median(filtd,sampname,plots=True,med_factor):
     testmed = testmed/testmed.sum()
     ###formatting
     testmed = testmed.fillna(0)
-    testmed = testmed.transpose()
     ###plot
     sns.clustermap(testmed,cmap='Blues')
     ###formatting
@@ -290,13 +289,13 @@ def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1
     if hamming == True:
         readtable.drop_duplicates(inplace=True)
         matchby_hamdist(readtable,bcsmulti,bcs10x)
-    #####check duplication multi and 10x rates
-    multirate = check_stats(readtable,bcsmulti,bcs10x)
+        #####check duplication multi and 10x rates
+        multirate = check_stats(readtable,bcsmulti,bcs10x)
     ####filter readtable
     filtd = filter_readtable(readtable,bcsmulti,bcs10x)
     ####implement multiseq correction by within distribution zscores
     if median_only == True:
-        correct_median(filtd,sampname,plots,med_factor)
+        correct_median(filtd,sampname,med_factor,plots)
     else:
         correct_simple(filtd,sampname,plots,thresh,pct_only,thresh_dict)
     
