@@ -74,11 +74,11 @@ def matchby_hamdist(readtable,bcsmulti,bcs10x):
     ####apply to multiseq barcodes
     readtable['multi'] = readtable.apply(lambda row: find_closest(str(row['multi']),bcsmulti,trantab),axis=1)
     print('finished hamming correction for multiseq.',timeit())
-    ####apply to 10x barcodes
-    readtable['cell'] = readtable.apply(lambda row: find_closest(str(row['cell']),bcs10x,trantab),axis=1)
-    print('finished hamming correction for 10x.',timeit())
-    ####return
-    return readtable
+#     ####apply to 10x barcodes
+#     readtable['cell'] = readtable.apply(lambda row: find_closest(str(row['cell']),bcs10x,trantab),axis=1)
+#     print('finished hamming correction for 10x.',timeit())
+#     ####return
+#     return readtable
     
 def find_closest(searchstr,barcodes,trantab):
     """ finds closest in distance matrix  based on hamming <= 1"""
@@ -215,7 +215,7 @@ def correct_simple(filtd,sampname,plots=True,thresh=False,pct_only=False,thresh_
     ###pre run checks
     pivot = format_multi_table(filtd)
     check_pivot(pivot,sampname)
-    if thresh==True: correct_cutoffs(pivot,thresh_dict,cut=correct_simple(filtd,sampname,thresh=False))
+    if thresh==True: correct_cutoffs(pivot,thresh_dict,cut=correct_simple(filtd,sampname,thresh=False)) 
     ###raw percentiles
     test = pivot+0.01
     test = test/test.sum()
@@ -244,12 +244,40 @@ def correct_simple(filtd,sampname,plots=True,thresh=False,pct_only=False,thresh_
     ###return in the event of multiple iterations of corrections
     return(test)
 
+def correct_median(filtd,sampname,plots=True,med_factor)
+    ###pre run checks
+    pivot = format_multi_table(filtd)
+    check_pivot(pivot,sampname)
+    ###subtract the median multiplied by the factor for each barcode (ie remove background)
+    testmed = pivot.transpose()-med_factor*(pivot.transpose().apply(np.median))
+    ###formatting, set negatives to zero
+    testmed = testmed.transpose()
+    testmed[testmed<0] = 0
+    ###calculate pct per cell
+    testmed = testmed/testmed.sum()
+    ###formatting
+    testmed = testmed.fillna(0)
+    testmed = testmed.transpose()
+    ###plot
+    sns.clustermap(testmed,cmap='Blues')
+    ###formatting
+    test = testmed.transpose()
+    ####get significance value and call cells
+    new = test.copy()
+    new['call'] = test.apply(lambda row: get_sig(list(row),list(test.columns)),axis=1)
+    new['sig'] = test.apply(lambda row: z_ratio(list(row)),axis=1)
+    ###save
+    new.to_csv('pymulti/'+sampname+'_calls.tsv',sep='\t')
+    ###return in the event of multiple iterations of corrections
+    return(test)
+
+
 #####################
 #####################main function
 #####################
 
-def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,sampname='pymulti_',
-            split=True,plots=True,hamming=False,thresh=False,pct_only=False,thresh_dict={}):
+def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1.6,sampname='pymulti_',
+            split=True,plots=True,hamming=False,thresh=False,pct_only=False,median_only=False,thresh_dict={}):
     """ main loop, splits from fastqs and runs through cell calls """
     ###split fastqs and pickle
     os.system('mkdir pymulti')
@@ -262,8 +290,13 @@ def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,sampname='py
     if hamming == True:
         readtable.drop_duplicates(inplace=True)
         matchby_hamdist(readtable,bcsmulti,bcs10x)
+    #####check duplication multi and 10x rates
+    multirate = check_stats(readtable,bcsmulti,bcs10x)
     ####filter readtable
     filtd = filter_readtable(readtable,bcsmulti,bcs10x)
     ####implement multiseq correction by within distribution zscores
-    correct_simple(filtd,sampname,plots,thresh,pct_only,thresh_dict)
+    if median_only == True:
+        correct_median(filtd,sampname,plots,med_factor)
+    else:
+        correct_simple(filtd,sampname,plots,thresh,pct_only,thresh_dict)
     
