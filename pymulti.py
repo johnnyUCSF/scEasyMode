@@ -244,7 +244,7 @@ def correct_simple(filtd,sampname,plots=True,thresh=False,pct_only=False,thresh_
     ###return in the event of multiple iterations of corrections
     return(test)
 
-def correct_median(filtd,sampname,plots=True,med_factor)
+def correct_median(filtd,sampname,plots=True,med_factor):
     ###pre run checks
     pivot = format_multi_table(filtd)
     check_pivot(pivot,sampname)
