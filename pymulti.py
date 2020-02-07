@@ -290,7 +290,24 @@ def correct_median(filtd,sampname,med_factor,plots=True):
 
 def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1.6,sampname='pymulti_',
             split=True,plots=True,hamming=False,thresh=False,pct_only=False,median_only=False,huge=False,thresh_dict={}):
-    """ main loop, splits from fastqs and runs through cell calls """
+    """ main loop, splits from fastqs and runs through cell calls 
+        R1 = your Read1 fastq for the multiseq/hashing fraction
+        R2 = your Read2 fastq for the multiseq/hashing fraction
+        bcsmulti = your whitelist of known multiseq/hashing barcodes
+        bcs10x = your whitelist of known cell identifiers
+        len10x = the length of the 10x barcodes
+        len_umi = the length of the umis on each pair of reads
+        len_multi = the length of the multiseq barcode sequence the package will split out
+        med_factor = if doing median correction, this is the factor that is multiplied by the median to estimate the amount of background reads per barcode
+        sampname = this is the handle with which intermediate files will be saved
+        split = True if you have not split it from fastq yet, False if you have split it already and want to rerun the processing. this will save time.
+        hamming = True if you want to use match multiseq barcodes within hamming distance of 1 to the multiseq/hashing whitelist
+        thresh = True if you want to use a threshold on which to gate reads, different correction method
+        pct_only = True if you only want to use the raw percentage of reads to call the barcode
+        median_only = True if you want to use the median correction method
+        huge = True if your file is huge in which case it will be saved as an h5 file instead of pickling
+        thresh_dict = a dictionary of barcodes:threshold which will be used to gate reads on the samples
+    """
     ###
     if huge == True: print('assuming huge fastqs.')
     ###split fastqs and pickle

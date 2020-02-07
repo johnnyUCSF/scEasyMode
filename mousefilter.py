@@ -22,8 +22,11 @@ import os
 #####################
 
 def main(mousefile,humanfile=None,cutoff=0.5):
-    """ Main entry point of the app """
-    """ Returns truemouse and truehuman Anndata objects filtered by cutoff of % mouse genes """
+    """ Returns truemouse and truehuman Anndata objects filtered by cutoff of % mouse genes 
+        mousefile = the raw anndata object that has been aligned to mm10hg19 (or something equivalent)
+        humanfile = the raw anndata object that has been aligned to human only
+        cutoff = the threshold of % mouse genes that is used to group cells as mouse or human
+    """
     ###make sure inputs are valid h5 files
     check_inputs(mousefile,humanfile,cutoff)
     ###read files into anndata objects

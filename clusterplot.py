@@ -83,6 +83,13 @@ def plot_cluster_proportions(cluster_props,
     return fig
     
 def plot(adata,covariates=['phase','louvain','dead'],sample='sample'):
+    """ Calculates and plots the proportion of cells as a stacked barplot across a particular variable.
+        adata = the anndata object to act on
+        covariates = the covariates that are plotted across
+        sample = the id on which to split the dataset
+        
+        Returns a plot to the interpreter.
+    """
     for covariate in covariates:
         cluster_props = get_cluster_proportions(adata,cluster_key=covariate,sample_key=sample)
         fig = plot_cluster_proportions(cluster_props)
