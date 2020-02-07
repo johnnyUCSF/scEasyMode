@@ -29,7 +29,6 @@ from sklearn.neighbors import DistanceMetric
 import datetime
 from scipy.spatial.distance import hamming
 import gzip
-from sklearn.externals import joblib
 
 #####################
 #####################
@@ -54,8 +53,8 @@ def split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge):
     ###if huge file, then use joblib (pickle crashes)
     if huge == True:
         print('saved as huge file.')
-        filename = 'pymulti/'+sampname+"_reads.p"
-        joblib.dump(reads, filename) 
+        filename = 'pymulti/'+sampname+"_reads.h5"
+        reads.to_hdf(filename, key='df', mode='w')
     else:
     ###regular pickle dump
         pickle.dump(reads, open('pymulti/'+sampname+"_reads.p", "wb" ) )
@@ -65,7 +64,7 @@ def read_pickle(sampname,huge):
     if huge == True:
         print('read as huge file.')
         filename = 'pymulti/'+sampname+"_reads.p"
-        readtable = joblib.load(filename)
+        readtable = pd.read_hdf(filename, 'df')
     else:
         ####read in
         readtable = pd.DataFrame(pickle.load(open('pymulti/'+sampname+"_reads.p", "rb" ) ))
