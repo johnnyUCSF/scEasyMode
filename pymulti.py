@@ -29,6 +29,8 @@ from sklearn.neighbors import DistanceMetric
 import datetime
 from scipy.spatial.distance import hamming
 import gzip
+from sklearn.externals import joblib
+
 #####################
 #####################
 
@@ -36,7 +38,7 @@ import gzip
 #####################readin from fastq functions
 #####################
 
-def split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname):
+def split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge):
     """ this reads in fastq files and definitions of read structure and dumps it as a pickle """
     ###store paired end reads
     reads = []
@@ -49,13 +51,22 @@ def split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname):
             r2 = str(record2.seq[:len_multi])
             ####write in
             reads.append([bc_10x,umi,r2])
-    ###dump
-    pickle.dump(reads, open('pymulti/'+sampname+"_reads.p", "wb" ) )
+    ###if huge file, then use joblib (pickle crashes)
+    if huge == True:
+        filename = 'pymulti/'+sampname+"_reads.p"
+        joblib.dump(reads, filename) 
+    else:
+    ###regular pickle dump
+        pickle.dump(reads, open('pymulti/'+sampname+"_reads.p", "wb" ) )
     
-def read_pickle(sampname):
+def read_pickle(sampname,huge):
     """ this reads in the pickle data written from split_rawdata """
-    ####read in
-    readtable = pd.DataFrame(pickle.load(open('pymulti/'+sampname+"_reads.p", "rb" ) ))
+    if huge == True:
+        filename = 'pymulti/'+sampname+"_reads.p"
+        readtable = joblib.load(filename)
+    else:
+        ####read in
+        readtable = pd.DataFrame(pickle.load(open('pymulti/'+sampname+"_reads.p", "rb" ) ))
     ####format
     readtable.columns = ['cell','umi','multi']
     readtable.set_index('cell')
@@ -277,13 +288,13 @@ def correct_median(filtd,sampname,med_factor,plots=True):
 #####################
 
 def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1.6,sampname='pymulti_',
-            split=True,plots=True,hamming=False,thresh=False,pct_only=False,median_only=False,thresh_dict={}):
+            split=True,plots=True,hamming=False,thresh=False,pct_only=False,median_only=False,huge=False,thresh_dict={}):
     """ main loop, splits from fastqs and runs through cell calls """
     ###split fastqs and pickle
     os.system('mkdir pymulti')
-    if split == True: split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname)
+    if split == True: split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge=huge)
     ###read in old pickle data
-    readtable = read_pickle(sampname)
+    readtable = read_pickle(sampname,huge=huge)
     #####check duplication multi and 10x rates
     multirate = check_stats(readtable,bcsmulti,bcs10x)
     ####match by hamming distance
