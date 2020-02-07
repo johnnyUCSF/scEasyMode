@@ -53,6 +53,7 @@ def split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge):
             reads.append([bc_10x,umi,r2])
     ###if huge file, then use joblib (pickle crashes)
     if huge == True:
+        print('saved as huge file.')
         filename = 'pymulti/'+sampname+"_reads.p"
         joblib.dump(reads, filename) 
     else:
@@ -62,6 +63,7 @@ def split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge):
 def read_pickle(sampname,huge):
     """ this reads in the pickle data written from split_rawdata """
     if huge == True:
+        print('read as huge file.')
         filename = 'pymulti/'+sampname+"_reads.p"
         readtable = joblib.load(filename)
     else:
@@ -290,6 +292,8 @@ def correct_median(filtd,sampname,med_factor,plots=True):
 def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1.6,sampname='pymulti_',
             split=True,plots=True,hamming=False,thresh=False,pct_only=False,median_only=False,huge=False,thresh_dict={}):
     """ main loop, splits from fastqs and runs through cell calls """
+    ###
+    if huge == True: print('assuming huge fastqs.')
     ###split fastqs and pickle
     os.system('mkdir pymulti')
     if split == True: split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge=huge)
