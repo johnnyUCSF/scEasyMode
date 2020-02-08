@@ -52,19 +52,17 @@ def split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge):
             reads.append([bc_10x,umi,r2])
     ###if huge file, then use joblib (pickle crashes)
     if huge == True:
-        print('saved as huge file.')
-        filename = 'pymulti/'+sampname+"_reads.h5"
-        reads.to_hdf(filename, key='df', mode='w')
+        print('file is huge. not saving.')
+        return(reads)
     else:
     ###regular pickle dump
         pickle.dump(reads, open('pymulti/'+sampname+"_reads.p", "wb" ) )
+        return(reads)
     
-def read_pickle(sampname,huge):
+def read_pickle(sampname,reads,huge):
     """ this reads in the pickle data written from split_rawdata """
     if huge == True:
-        print('read as huge file.')
-        filename = 'pymulti/'+sampname+"_reads.p"
-        readtable = pd.read_hdf(filename, 'df')
+        readtable = pd.DataFrame(reads)
     else:
         ####read in
         readtable = pd.DataFrame(pickle.load(open('pymulti/'+sampname+"_reads.p", "rb" ) ))
@@ -312,9 +310,9 @@ def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1
     if huge == True: print('assuming huge fastqs.')
     ###split fastqs and pickle
     os.system('mkdir pymulti')
-    if split == True: split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge=huge)
+    if split == True: reads = split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge=huge)
     ###read in old pickle data
-    readtable = read_pickle(sampname,huge=huge)
+    readtable = read_pickle(sampname,reads=reads,huge=huge)
     #####check duplication multi and 10x rates
     multirate = check_stats(readtable,bcsmulti,bcs10x)
     ####match by hamming distance
