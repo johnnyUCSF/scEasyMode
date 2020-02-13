@@ -162,17 +162,22 @@ def qcgenes(adata,threshold=1000):
     sns.distplot(adata.obs['n_genes'][adata.obs['n_genes']>threshold], bins=100)
     plt.figure()
 
-def cellcycle(adata):
+def cellcycle(adata,mouse):
     adata.var_names_make_unique()
-    #Score cell cycle and visualize the effect:
+    ##Score cell cycle and visualize the effect:
     cell_cycle_genes = [x.strip() for x in open('scEasyMode/regev_lab_cell_cycle_genes.txt')]
     s_genes = cell_cycle_genes[:43]
     g2m_genes = cell_cycle_genes[43:]
+    ##add labels for mouse genes
+    if mouse == True:
+        s_genes = ['MM10___'+s for s in s_genes]
+        g2m_genes = ['MM10___'+g2m for g2m in g2m_genes]
+    ##calculate
     cell_cycle_genes = [x for x in cell_cycle_genes if x in adata.var_names]
     sc.tl.score_genes_cell_cycle(adata, s_genes=s_genes, g2m_genes=g2m_genes)
     return(adata)
 
-def qc_all(adata,suppress_plots=False):
+def qc_all(adata,suppress_plots=False,mouse=False):
     """ Performs standard quality checks on data and visualizes it. Does not do any filtering.
         Checks mitochondrial genes, number of genes, and number of counts
         adata = the anndata object to operate on
@@ -182,7 +187,8 @@ def qc_all(adata,suppress_plots=False):
     """
     ###qc
     adata = qccheck(adata,suppress_plots)
-    adata = cellcycle(adata)
+    adata.var.index = adata.var.index.str.upper()
+    adata = cellcycle(adata,mouse)
     ###plot
     if suppress_plots == False:
         qccounts(adata)
