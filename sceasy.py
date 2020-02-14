@@ -27,10 +27,6 @@ from scipy.stats.mstats import gmean
 #######################################################
 
 def read_species(human=True):
-    """ Returns either the human or mouse anndata object
-        human = True if you want the human object, false will give you the mouse object
-    """
-    
     if human == True:
         return(sc.read_h5ad("DataBySpecies/human.anndata.h5ad"))
     else:
@@ -47,13 +43,7 @@ def read(filename):
 #######################################################
     
 def overlay_meta(adata,LMOfile,sampname='pymulti_'):
-    """ Automatically overlays the metadata from multiseq to the single cell dataset. 
-        adata = the anndata object
-        LMOfile = the file mapping the cell hashing/multiseq indices to the sample identifiers
-        sampname = the sample name that has been used to save files as the prefix
-        
-        Returns an anndata object with metadata from the LMOfile overlaid
-    """
+    """ Automatically overlays the metadata from multiseq to the single cell dataset. """
     ###get barcodes
     adata.obs['barcode'] = adata.obs.index.str[:-2]
     ###get dictionaries of metadata
@@ -162,33 +152,20 @@ def qcgenes(adata,threshold=1000):
     sns.distplot(adata.obs['n_genes'][adata.obs['n_genes']>threshold], bins=100)
     plt.figure()
 
-def cellcycle(adata,mouse):
+def cellcycle(adata):
     adata.var_names_make_unique()
-    ##Score cell cycle and visualize the effect:
+    #Score cell cycle and visualize the effect:
     cell_cycle_genes = [x.strip() for x in open('scEasyMode/regev_lab_cell_cycle_genes.txt')]
     s_genes = cell_cycle_genes[:43]
     g2m_genes = cell_cycle_genes[43:]
-    ##add labels for mouse genes
-    if mouse == True:
-        s_genes = ['MM10___'+s for s in s_genes]
-        g2m_genes = ['MM10___'+g2m for g2m in g2m_genes]
-    ##calculate
     cell_cycle_genes = [x for x in cell_cycle_genes if x in adata.var_names]
     sc.tl.score_genes_cell_cycle(adata, s_genes=s_genes, g2m_genes=g2m_genes)
     return(adata)
 
-def qc_all(adata,suppress_plots=False,mouse=False):
-    """ Performs standard quality checks on data and visualizes it. Does not do any filtering.
-        Checks mitochondrial genes, number of genes, and number of counts
-        adata = the anndata object to operate on
-        suppress_plots = True if you want to just do the qc without all the plots
-        
-        Returns formatted anndata object.
-    """
+def qc_all(adata,suppress_plots=False):
     ###qc
     adata = qccheck(adata,suppress_plots)
-    adata.var.index = adata.var.index.str.upper()
-    adata = cellcycle(adata,mouse)
+    adata = cellcycle(adata)
     ###plot
     if suppress_plots == False:
         qccounts(adata)
@@ -234,18 +211,6 @@ def normalize(adata):
     return(adata)
 
 def filters(adata,mt_thresh,min_cells,min_counts,max_counts,min_genes,get_hvgs=True,sig_pct=False):
-    """ implements many filters at the same time to get you the relevant cells and genes.
-        adata = the anndata object to operate on
-        mt_thresh = the % mitochondrial above which to filter out cells
-        min_cells = the number of cells that a gene has to be expressed in to keep
-        min_counts = the number of counts that a cell must have to keep
-        max_counts = the number of counts that a cell must be below to keep
-        min_genes = the number of genes that a cell must have to keep
-        get_hvgs = select HVGs in preparation for downstream clustering
-        sig_pct = the percentile of which to remove cells based on the multiseq/hashing
-        
-        Returns two formatted anndata objects. The first one is the original without mitochondrial gene filtering, the second one is the one with mitochondrial gene filtering.
-    """
     ###annotate dead cells in full data set
     adata = annotate_mito(adata,mt_thresh)
     ###filter by sig from multiseq calls
@@ -283,16 +248,7 @@ def filter_by_sig(adata,sig_pct):
 ####################################################### Clustering and visualization
 #######################################################
 
-def visualize(adata,covariates=['n_counts','n_genes','mt_frac','phase','sample','louvain','dead','sig'],res=0.5,bbknn=False,suppress_plots=False):
-    """ calculates visualizations for all cells in pca, umap, diffusion map, and force directed graph 2D space.
-        adata = the anndata object on which to act on.
-        covariates = the covariates on which to overlay onto the visualizations
-        res = the resolution for louvain clustering (higher is more discrete clusters)
-        bbknn = True if you want to use bbknn normalization as a batch correction measure
-        suppress_plots = True if you just want to calculate the visualizations without all the plots
-    
-        Returns an anndata object with all the calculations built in for plotting.
-    """
+def visualize(adata,covariates=['n_counts','n_genes','mt_frac','phase','sample','leiden','dead','sig'],res=0.5,bbknn=False,suppress_plots=False):
     ###Calculate the visualizations
     sc.pp.pca(adata, n_comps=50, use_highly_variable=True, svd_solver='arpack')
     if bbknn == True:
@@ -320,16 +276,10 @@ def regress(adata,factors):
     return(adata)
 
 def cluster(adata,res):
-    sc.tl.louvain(adata, resolution=res, key_added='louvain', random_state=10)
+    sc.tl.leiden(adata, resolution=res, key_added='leiden', random_state=10)
     return(adata)
 
 def densitymap(adata,sample_key='sample'):
-    """ Plots the density of samples across umap space 
-        adata = anndata object to act on
-        key = the key on which to split the dataset and visualize samples individually.
-        
-        Returns a plot to the interpreter.
-    """
     sc.tl.embedding_density(adata, basis='umap', groupby=sample_key)
     sc.pl.embedding_density(adata, basis='umap', key='umap_density_'+sample_key)
 
@@ -374,9 +324,9 @@ def correct_demuxlet(adata,cutoff=0.7,label='cell_type'):
     cutoff = 0.7
     celldict = {}
     ###
-    for clust in set(adata.obs.louvain):
+    for clust in set(adata.obs.leiden):
         ##get cluster alone first
-        clustdf = adata[adata.obs.louvain==clust].obs
+        clustdf = adata[adata.obs.leiden==clust].obs
         ##calculate proportions
         props = clustdf.groupby(label).count()['barcode']/(len(clustdf))
         ##see if majority based on cutoff
@@ -389,7 +339,7 @@ def correct_demuxlet(adata,cutoff=0.7,label='cell_type'):
         else:
             celldict[clust] = 'delete'
         ##print a log
-        print('louvain cluster ',clust,' has a majority cell type of ',majorcell)
+        print('leiden cluster ',clust,' has a majority cell type of ',majorcell)
     ###replace cell type calls
     adata.obs[label] = adata.obs.apply(lambda row: replace_celltypes(celldict,row,label),axis=1)
     ###remove cells flagged as non confident calls (probable doublets)
@@ -399,8 +349,8 @@ def correct_demuxlet(adata,cutoff=0.7,label='cell_type'):
     
 def replace_celltypes(celldict,row,label):
     """ Replaces cell type with max celltype in anndata object, but preserves original call if no max cell type is found. """
-    if row['louvain'] in celldict:
-        return(celldict[row['louvain']])
+    if row['leiden'] in celldict:
+        return(celldict[row['leiden']])
     else:
         return(row[label])
 
