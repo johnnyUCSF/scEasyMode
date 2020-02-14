@@ -310,7 +310,10 @@ def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1
     if huge == True: print('assuming huge fastqs.')
     ###split fastqs and pickle
     os.system('mkdir pymulti')
-    if split == True: reads = split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge=huge)
+    if split == True: 
+        reads = split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge=huge)
+    else:
+        reads = None
     ###read in old pickle data
     readtable = read_pickle(sampname,reads=reads,huge=huge)
     #####check duplication multi and 10x rates
