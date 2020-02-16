@@ -426,5 +426,53 @@ def plot_fitness(fitness):
         plt.tight_layout()
         plt.savefig('figures/'+treatment+'.pdf',dpi=200)
     
+def get_PT_path(indata,timelabel,origin_group,dcN,min_search=True):
+    """ Overlays the metadata specified in METAfile. Note that it must have the barcodes as colname = 'BARCODE' """
+    #####this is a particular DC. You mustknow the one you want prior.
+    countsN = 50
+    ###formatting
+    adata = indata.copy()
+    # adata.var.drop(labels=['n_cells'],inplace=True,axis=1)
+    sc.pp.filter_genes(adata, min_counts=countsN)
+    adata.X[adata.X<0] = 0 
+    print(adata.shape)
+    #Find the T0 cell with the lowest/highest DC1 value to act as root for the diffusion pseudotime and compute DPT
+    stem_mask = np.isin(adata.obs[timelabel], origin_group)
+    if min_search == True:
+        max_stem_id = np.argmin(adata.obsm['X_diffmap'][stem_mask,dcN])
+    else:
+        max_stem_id = np.argmax(adata.obsm['X_diffmap'][stem_mask,dcN])    
+    root_id = np.arange(len(stem_mask))[stem_mask][max_stem_id]
+    adata.uns['iroot'] = root_id
+    #Compute dpt
+    sc.tl.dpt(adata)
+    ####fit model
+    x = pd.DataFrame(adata.X,index=adata.obs_names,columns=adata.var_names)
+    y = adata.obs.dpt_pseudotime
+    ####
+    from sklearn import linear_model
+    reg = linear_model.RidgeCV(alphas=np.array([1.e-6, 1.e-5, 1.e-4, 1.e-3, 1.e-2, 1.e-1, 1.e+0, 1.e+1,1.e+2, 1.e+3, 1.e+4, 1.e+5, 1.e+6]),
+                               cv=None, fit_intercept=True, normalize=True,
+                               scoring=None, store_cv_values=False)
+    reg.fit(x,y)       
+    ###print metrics
+    print(reg.score(x,y),reg.intercept_)
+    ###save values to new gene list
+    dp1genes = pd.DataFrame(reg.coef_,index=adata.var_names,columns=['glm_coef'])
+    dp1genes.sort_values(by='glm_coef',ascending=False,inplace=True)
+    ###see only high expressors
+    dp1genes_hi = dp1genes[dp1genes.index.isin(adata.var.index.tolist())]
+    ###
+    genes = dp1genes_hi.head(n=5).index.tolist()
+    #Visualize pseudotime over variables
+    sc.pl.diffmap(adata, components='1,2', color='dpt_pseudotime')
+    sc.pl.diffmap(adata, components='1,2', color=timelabel)
+    sc.pl.diffmap(adata, components='1,2', color='phase')
+    for gene in genes:
+        sc.pl.diffmap(adata, components='1,2', color=gene)
+    ###returns the pseudotime calculated df 
+    return(adata,dp1genes)
+    
+    
     
     
