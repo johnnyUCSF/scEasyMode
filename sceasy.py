@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import scanpy as sc
+from datetime import datetime
 from scipy import stats
 from scipy.stats.mstats import gmean
 #####################
@@ -427,7 +428,7 @@ def plot_fitness(fitness):
         plt.savefig('figures/'+treatment+'.pdf',dpi=200)
     
 def get_PT_path(indata,timelabel,origin_group,dcN,min_search=True):
-    """ Overlays the metadata specified in METAfile. Note that it must have the barcodes as colname = 'BARCODE' """
+    """ Does the heavy lifting on pseudotime calculation after you define the axis you want to search on. Also fits linear model to predict genes along PT trajectory. """
     #####this is a particular DC. You mustknow the one you want prior.
     countsN = 50
     ###formatting
@@ -435,7 +436,7 @@ def get_PT_path(indata,timelabel,origin_group,dcN,min_search=True):
     # adata.var.drop(labels=['n_cells'],inplace=True,axis=1)
     sc.pp.filter_genes(adata, min_counts=countsN)
     adata.X[adata.X<0] = 0 
-    print(adata.shape)
+    print(adata.shape,'finding root cell ',datetime.now())
     #Find the T0 cell with the lowest/highest DC1 value to act as root for the diffusion pseudotime and compute DPT
     stem_mask = np.isin(adata.obs[timelabel], origin_group)
     if min_search == True:
@@ -445,11 +446,13 @@ def get_PT_path(indata,timelabel,origin_group,dcN,min_search=True):
     root_id = np.arange(len(stem_mask))[stem_mask][max_stem_id]
     adata.uns['iroot'] = root_id
     #Compute dpt
+    print('tracing pseudotime ',datetime.now())
     sc.tl.dpt(adata)
     ####fit model
     x = pd.DataFrame(adata.X,index=adata.obs_names,columns=adata.var_names)
     y = adata.obs.dpt_pseudotime
     ####
+    print('fitting genes to trajectory ',datetime.now())
     from sklearn import linear_model
     reg = linear_model.RidgeCV(alphas=np.array([1.e-6, 1.e-5, 1.e-4, 1.e-3, 1.e-2, 1.e-1, 1.e+0, 1.e+1,1.e+2, 1.e+3, 1.e+4, 1.e+5, 1.e+6]),
                                cv=None, fit_intercept=True, normalize=True,
@@ -473,6 +476,33 @@ def get_PT_path(indata,timelabel,origin_group,dcN,min_search=True):
     ###returns the pseudotime calculated df 
     return(adata,dp1genes)
     
+def vis_pseudostable(adata):
+    """ Histogram across PT state to allow definition of pseudotime """
+    # Density Plot and Histogram of all arrival delays
+    plt.figure(figsize=(15, 15))
+    sns.distplot(adata.obs.dpt_pseudotime, hist=True, kde=True, 
+                 bins=int(180/5), color = 'darkblue', 
+                 hist_kws={'edgecolor':'black'},
+                 kde_kws={'linewidth': 4})
+    plt.xlim(-0.1,1.1)
+    plt.yscale('log',nonposy='clip')
+    plt.ylim(0.09,10**2)
     
     
-    
+def vis_pseudostable_covariates(adata,metadata):
+    """ Histogram across PT state to allow definition of pseudotime overlaid with the covariates you want to see. """
+    plt.figure(figsize=(15, 15))
+    for meta_i in range(len(metadata)):
+        meta = metadata[meta_i]
+        ###plot individual
+        plt.figure()
+        for subpop in list(set(adata.obs[meta])):
+            tmp =adata[adata.obs[meta]==subpop]
+            ###plot
+            sns.distplot(tmp.obs.dpt_pseudotime, hist = False, kde = True,
+                     kde_kws = {'linewidth': 3},
+                     label = subpop)
+            plt.title(meta)
+        plt.xlim(-0.1,1.1)
+        plt.yscale('log',nonposy='clip')
+        plt.ylim(0.09,10**2)
