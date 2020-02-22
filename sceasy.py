@@ -427,7 +427,7 @@ def plot_fitness(fitness):
         plt.tight_layout()
         plt.savefig('figures/'+treatment+'.pdf',dpi=200)
     
-def get_PT_path(indata,timelabel,origin_group,dcN,min_search=True):
+def get_PT_path(indata,timelabel,origin_group,dcN,min_search=True,fit_genes=True):
     """ Does the heavy lifting on pseudotime calculation after you define the axis you want to search on. Also fits linear model to predict genes along PT trajectory. """
     #####this is a particular DC. You mustknow the one you want prior.
     countsN = 50
@@ -452,27 +452,31 @@ def get_PT_path(indata,timelabel,origin_group,dcN,min_search=True):
     x = pd.DataFrame(adata.X,index=adata.obs_names,columns=adata.var_names)
     y = adata.obs.dpt_pseudotime
     ####
-    print('fitting genes to trajectory ',datetime.now())
-    from sklearn import linear_model
-    reg = linear_model.RidgeCV(alphas=np.array([1.e-6, 1.e-5, 1.e-4, 1.e-3, 1.e-2, 1.e-1, 1.e+0, 1.e+1,1.e+2, 1.e+3, 1.e+4, 1.e+5, 1.e+6]),
-                               cv=None, fit_intercept=True, normalize=True,
-                               scoring=None, store_cv_values=False)
-    reg.fit(x,y)       
-    ###print metrics
-    print(reg.score(x,y),reg.intercept_)
-    ###save values to new gene list
-    dp1genes = pd.DataFrame(reg.coef_,index=adata.var_names,columns=['glm_coef'])
-    dp1genes.sort_values(by='glm_coef',ascending=False,inplace=True)
-    ###see only high expressors
-    dp1genes_hi = dp1genes[dp1genes.index.isin(adata.var.index.tolist())]
-    ###
-    genes = dp1genes_hi.head(n=5).index.tolist()
+    if fit_genes == True:
+        print('fitting genes to trajectory ',datetime.now())
+        from sklearn import linear_model
+        reg = linear_model.RidgeCV(alphas=np.array([1.e-6, 1.e-5, 1.e-4, 1.e-3, 1.e-2, 1.e-1, 1.e+0, 1.e+1,1.e+2, 1.e+3, 1.e+4, 1.e+5, 1.e+6]),
+                                   cv=None, fit_intercept=True, normalize=True,
+                                   scoring=None, store_cv_values=False)
+        reg.fit(x,y)       
+        ###print metrics
+        print(reg.score(x,y),reg.intercept_)
+        ###save values to new gene list
+        dp1genes = pd.DataFrame(reg.coef_,index=adata.var_names,columns=['glm_coef'])
+        dp1genes.sort_values(by='glm_coef',ascending=False,inplace=True)
+        ###see only high expressors
+        dp1genes_hi = dp1genes[dp1genes.index.isin(adata.var.index.tolist())]
+        ###
+        genes = dp1genes_hi.head(n=5).index.tolist()
+        ###visualize
+        for gene in genes:
+            sc.pl.diffmap(adata, components='1,2', color=gene)
+    else:
+        dp1genes = None
     #Visualize pseudotime over variables
     sc.pl.diffmap(adata, components='1,2', color='dpt_pseudotime')
     sc.pl.diffmap(adata, components='1,2', color=timelabel)
     sc.pl.diffmap(adata, components='1,2', color='phase')
-    for gene in genes:
-        sc.pl.diffmap(adata, components='1,2', color=gene)
     ###returns the pseudotime calculated df 
     return(adata,dp1genes)
     
@@ -481,7 +485,7 @@ def vis_pseudostable(adata):
     # Density Plot and Histogram of all arrival delays
     plt.figure(figsize=(15, 15))
     sns.distplot(adata.obs.dpt_pseudotime, hist=True, kde=True, 
-                 bins=int(180/5), color = 'darkblue', 
+                 bins=int(len(adata)/20), color = 'darkblue', 
                  hist_kws={'edgecolor':'black'},
                  kde_kws={'linewidth': 4})
     plt.xlim(-0.1,1.1)
@@ -496,7 +500,9 @@ def vis_pseudostable_covariates(adata,metadata):
         meta = metadata[meta_i]
         ###plot individual
         plt.figure()
-        for subpop in list(set(adata.obs[meta])):
+        subpops = list(set(adata.obs[meta]))
+        subpops.sort()
+        for subpop in subpops:
             tmp =adata[adata.obs[meta]==subpop]
             ###plot
             sns.distplot(tmp.obs.dpt_pseudotime, hist = False, kde = True,
@@ -506,3 +512,15 @@ def vis_pseudostable_covariates(adata,metadata):
         plt.xlim(-0.1,1.1)
         plt.yscale('log',nonposy='clip')
         plt.ylim(0.09,10**2)
+
+def categorize_pseudostable(adata,PT_label,states):
+    """ Once pseudotimes have been calculated, takes a user defined list of cutoffs between 0 and 1 to categorize cells into pseudostates. """
+    adata.obs['pseudostate'] = adata.obs.apply(lambda row: lambda_categorize(row[PT_label],states),axis=1)
+    return(adata)
+    
+def lambda_categorize(PT,states):
+    i = 1
+    for cutoff in states:
+        if PT <= cutoff:
+             return(str(i))   
+        i+=1    

@@ -82,8 +82,9 @@ def matchby_hamdist(readtable,bcsmulti,bcs10x):
     ####make translation table
     trantab = make_trantab()
     ####apply to multiseq barcodes
-    readtable['multi'] = readtable.apply(lambda row: find_closest(str(row['multi']),bcsmulti,trantab),axis=1)
-    print('finished hamming correction for multiseq.',timeit())
+    if bcsmulti != None:
+        readtable['multi'] = readtable.apply(lambda row: find_closest(str(row['multi']),bcsmulti,trantab),axis=1)
+        print('finished hamming correction for multiseq.',timeit())
 #     ####apply to 10x barcodes
 #     readtable['cell'] = readtable.apply(lambda row: find_closest(str(row['cell']),bcs10x,trantab),axis=1)
 #     print('finished hamming correction for 10x.',timeit())
@@ -152,8 +153,9 @@ def pairwise_hamming(pd_series):
 def check_stats(readtable,bcsmulti,bcs10x):
     """ this checks the stats using exact match to multiseq, duplicates, and 10x """
     ####calculate # reads that contain a multiseq barcode
-    multirate = 100*(len(readtable[readtable.multi.isin(bcsmulti)]))/len(readtable)
-    print("Multiseq rate is: ",multirate)
+    if bcsmulti != None:
+        multirate = 100*(len(readtable[readtable.multi.isin(bcsmulti)]))/len(readtable)
+        print("Multiseq rate is: ",multirate)
     ####calculate # reads that are in the 10x bc index
     cellrate = 100*len(readtable[readtable['cell'].isin(bcs10x)])/len(readtable)
     print("10X Cell Barcode rate is: ",cellrate)
@@ -166,7 +168,8 @@ def filter_readtable(readtable,bcsmulti,bcs10x):
     """ this filters the readtable with exact matches """
     ####subset readtable
     filtd = readtable.drop_duplicates()
-    filtd = filtd[filtd.multi.isin(bcsmulti)]
+    if bcsmulti != None:
+        filtd = filtd[filtd.multi.isin(bcsmulti)]
     filtd = filtd[filtd['cell'].isin(bcs10x)]
 #     ####check size and shrink to max
 #     max_cells = 30000
@@ -286,8 +289,8 @@ def correct_median(filtd,sampname,med_factor,plots=True):
 #####################main function
 #####################
 
-def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1.6,sampname='pymulti_',
-            split=True,plots=True,hamming=False,thresh=False,pct_only=False,median_only=False,huge=False,thresh_dict={}):
+def pymulti(R1,R2,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1.6,sampname='pymulti_',
+            split=True,plots=True,hamming=False,thresh=False,pct_only=False,median_only=False,huge=False,bcsmulti=None,thresh_dict={}):
     """ main loop, splits from fastqs and runs through cell calls 
         R1 = your Read1 fastq for the multiseq/hashing fraction
         R2 = your Read2 fastq for the multiseq/hashing fraction
@@ -310,10 +313,7 @@ def pymulti(R1,R2,bcsmulti,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1
     if huge == True: print('assuming huge fastqs.')
     ###split fastqs and pickle
     os.system('mkdir pymulti')
-    if split == True: 
-        reads = split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge=huge)
-    else:
-        reads = None
+    if split == True: reads = split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge=huge)
     ###read in old pickle data
     readtable = read_pickle(sampname,reads=reads,huge=huge)
     #####check duplication multi and 10x rates
