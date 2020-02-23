@@ -171,11 +171,12 @@ def filter_readtable(readtable,bcsmulti,bcs10x,gbc_thresh):
     if bcsmulti != None:
         filtd = filtd[filtd.multi.isin(bcsmulti)]
     filtd = filtd[filtd['cell'].isin(bcs10x)]
-    if gbc_thesh != None:
+    if gbc_thresh != None:
         ####
         keep = filtd['multi'].value_counts()>(np.median(filtd['multi'].value_counts())*gbc_thresh)
         keep = keep[keep==True].index.tolist()
         filtd = filtd[filtd.multi.isin(keep)]
+        print('Number of GBCs: ',len(keep))
 #     ####check size and shrink to max
 #     max_cells = 30000
 #     keep = filtd.groupby(by='cell').count()
@@ -248,16 +249,18 @@ def correct_simple(filtd,sampname,plots=True,thresh=False,pct_only=False,thresh_
     else:
         test = test.transpose()
     ####plot distributions
-    for pop in list(test.columns):
-        plt.figure()
-        test[pop].hist(bins=100,color=np.random.rand(3,))
-        plt.title(pop)
-        plt.xlim(-5,5)
+    if plots==True:
+        for pop in list(test.columns):
+            plt.figure()
+            test[pop].hist(bins=100,color=np.random.rand(3,))
+            plt.title(pop)
+            plt.xlim(-5,5)
     ####get significance value and call cells
     new = test.copy()
     new['call'] = test.apply(lambda row: get_sig(list(row),list(test.columns)),axis=1)
     new['sig'] = test.apply(lambda row: z_ratio(list(row)),axis=1)
     ###save
+    print('saving file ',sampname)
     new.to_csv('pymulti/'+sampname+'_calls.tsv',sep='\t')
     ###return in the event of multiple iterations of corrections
     return(test)
@@ -321,7 +324,6 @@ def pymulti(R1,R2,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1.6,gbc_th
     if split == True: reads = split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge=huge)
     ###read in old pickle data
     readtable = read_pickle(sampname,reads=reads,huge=huge)
-    return(readtable)
     #####check duplication multi and 10x rates
     multirate = check_stats(readtable,bcsmulti,bcs10x)
     ####match by hamming distance
@@ -337,4 +339,5 @@ def pymulti(R1,R2,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1.6,gbc_th
         correct_median(filtd,sampname,med_factor,plots)
     else:
         correct_simple(filtd,sampname,plots,thresh,pct_only,thresh_dict)
+    return(filtd)
     
