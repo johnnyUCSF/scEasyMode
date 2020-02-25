@@ -74,6 +74,18 @@ def overlay_custom_meta(adata,METAfile,label):
     ###return
     return(adata)
 
+def overlay_gbcs(adata,gbc_df,label1='sig_gbc',label2='call_gbc'):
+    ###convert to dictionary
+    mdict1 = gbc_df.to_dict()[gbc_df.columns[0]]
+    mdict2 = gbc_df.to_dict()[gbc_df.columns[1]]
+    ###check indices
+    adata = adata[adata.obs.barcode.isin(mdict1.keys())]
+    ###write into .obs
+    adata.obs[label1] = adata.obs.apply(lambda row: mdict1[row.barcode],axis=1)
+    adata.obs[label2] = adata.obs.apply(lambda row: mdict2[row.barcode],axis=1)
+    ###return
+    return(adata)
+
 def format_demuxlet(DEMUXfile):
     """ formats the demuxlet file to two columns. """
     demux = pd.read_csv(DEMUXfile,sep='\t')
@@ -211,12 +223,16 @@ def normalize(adata):
     ##return
     return(adata)
 
-def filters(adata,mt_thresh,min_cells,min_counts,max_counts,min_genes,get_hvgs=True,sig_pct=False):
+def filters(adata,mt_thresh,min_cells,min_counts,max_counts,min_genes,sig_gbc=False,get_hvgs=True,sig_pct=False):
     ###annotate dead cells in full data set
     adata = annotate_mito(adata,mt_thresh)
     ###filter by sig from multiseq calls
     if sig_pct != False:
-        adata = adata[adata.obs.sig>np.percentile(adata.obs.sig,sig_pct)]
+        print('cutting off by sig_pct.')
+        adata = adata[adata.obs.sig>sig_pct]
+    if sig_gbc != False:
+        print('cutting off by sig_gbc.')
+        adata = adata[adata.obs.sig_gbc>sig_gbc]
     ###filter mitochondrial high genes out and create clean dataset
     clean = filter_cells(adata,mt_thresh,min_counts=min_counts,max_counts=max_counts,min_genes=min_genes)
     ###filter genes
