@@ -29,7 +29,8 @@ from sklearn.neighbors import DistanceMetric
 import datetime
 from scipy.spatial.distance import hamming
 import gzip
-
+import sys
+sys.setrecursionlimit(10000)
 #####################
 #####################
 
@@ -280,7 +281,7 @@ def correct_median(filtd,sampname,med_factor,plots=True):
     testmed = testmed.fillna(0)
     if plots == True:
         ###plot
-        sns.clustermap(testmed,cmap='Blues')
+        sns.clustermap(testmed,cmap='Blues',method='weighted',metric='cityblock',row_cluster=False)
     ###formatting
     test = testmed.transpose()
     ####get significance value and call cells
@@ -298,7 +299,7 @@ def correct_median(filtd,sampname,med_factor,plots=True):
 #####################
 
 def pymulti(R1,R2,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1.6,gbc_thresh=None,sampname='pymulti_',
-            split=True,plots=True,hamming=False,thresh=False,pct_only=False,median_only=False,huge=False,bcsmulti=None,thresh_dict={}):
+            split=True,plots=True,hamming=False,thresh=False,pct_only=False,median_only=False,huge=False,bcsmulti=None,reads=None,thresh_dict={}):
     """ main loop, splits from fastqs and runs through cell calls 
         R1 = your Read1 fastq for the multiseq/hashing fraction
         R2 = your Read2 fastq for the multiseq/hashing fraction
