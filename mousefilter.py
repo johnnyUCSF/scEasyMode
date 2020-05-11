@@ -41,7 +41,7 @@ def main(mousefile,humanfile=None,cutoff_top=0.5,cutoff_bottom=0.5,objects=False
     plot_mouse(mouse)
     ###split dataset into mouse and human
     truemouse,truehuman = filter_mouse(mouse,cutoff_top,cutoff_bottom)
-    truehuman = subset_human(human,truehuman)
+    truehuman = subset_human(human,truehuman,truemouse)
     ###return anndata objects for each species
     write_anndata(truemouse,truehuman)
     return(truemouse,truehuman)
@@ -109,12 +109,16 @@ def filter_mouse(mouse,cutoff_top,cutoff_bottom):
     ####return anndata objects
     return(truemouse,truehuman)
 
-def subset_human(human,truehuman):
+def subset_human(human,truehuman,truemouse=None):
     if human == None:
         return(truehuman)
     else:
-        human = human[human.obs.index.isin(truehuman.obs.index)]
-        return(human)
+        if truemouse == None:
+            human = human[human.obs.index.isin(truehuman.obs.index)]
+            return(human)
+        else:
+            human = human[~human.obs.index.isin(truemouse.obs.index)]
+            return(human)
 
 def write_anndata(truemouse,truehuman):
     os.system('mkdir DataBySpecies')
