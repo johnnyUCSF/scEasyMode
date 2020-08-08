@@ -46,7 +46,7 @@ def read(filename):
 ####################################################### Preliminary metadata functions
 #######################################################
     
-def overlay_meta(adata,LMOfile,sampname='pymulti_'):
+def overlay_meta(adata,LMOfile,PYMULTIfile):
     """ Automatically overlays the metadata from multiseq to the single cell dataset. 
         adata = the anndata object
         LMOfile = the file mapping the cell hashing/multiseq indices to the sample identifiers
@@ -58,7 +58,7 @@ def overlay_meta(adata,LMOfile,sampname='pymulti_'):
     adata.obs['barcode'] = adata.obs.index.str[:-2]
     ###get dictionaries of metadata
     LMOdict = get_LMOfile(LMOfile)
-    sig,call = get_pymulti(sampname)
+    sig,call = get_pymulti(PYMULTIfile)
     ###check indices
     adata = adata[adata.obs.barcode.isin(sig.keys())]
     adata = adata[adata.obs.barcode.isin(call.keys())]
@@ -111,10 +111,10 @@ def get_LMOfile(LMOfile):
     bcsmulti.columns = ['multi']
     return(bcsmulti.to_dict()['multi'])
 
-def get_pymulti(sampname):
+def get_pymulti(PYMULTIfile):
     """ read in python multi seq file and convert to two dictionaries, one for significance and one for call.
         using the cell barcodes as the keys. """
-    bcs = pd.read_csv('pymulti/'+sampname+'_calls.tsv',sep='\t',index_col=0)
+    bcs = pd.read_csv(PYMULTIfile,sep='\t',index_col=0)
     bcs = bcs[['sig','call']]
     sig = bcs.sig.to_dict()
     call = bcs.call.to_dict()
