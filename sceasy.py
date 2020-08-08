@@ -95,12 +95,55 @@ def overlay_gbcs(adata,gbc_df,label1='sig_gbc',label2='call_gbc'):
     ###return
     return(adata)
 
+def overlay_demux_freemux(adata):
+    """ matches freemuxlet demuxlet """
+    #### format
+    multi = adata.obs[['freemux','demux','barcode']]
+    multi = multi.groupby(by=["freemux","demux"]).count()
+    pivot = multi.pivot_table(index='freemux', columns='demux', values='barcode')
+    pivot = pivot.fillna(0)
+    test = pivot.copy()
+    test = test.transpose()
+    test = test/test.sum()
+    #### plot
+    sns.clustermap(test)
+    #### write to file
+    new = test.copy()
+    new['call'] = test.apply(lambda row: get_sig(list(row),list(test.columns)),axis=1)
+    new['sig'] = test.apply(lambda row: z_ratio(list(row)),axis=1)
+    ### save
+    sampname = 'freemux.demux'
+    print('saving file ',sampname)
+    new.to_csv(sampname+'.sig.'+'_calls.tsv',sep='\t')
+    #### read into adata object
+    new = new.reset_index()
+    new.index = new.call
+    newdict = new.demux.to_dict()
+    adata.obs['cell_match'] = adata.obs.apply(lambda row: newdict[row.freemux],axis=1)
+    return(adata)
+    
 def format_demuxlet(DEMUXfile):
     """ formats the demuxlet file to two columns. """
     demux = pd.read_csv(DEMUXfile,sep='\t')
     demux.index = demux.BARCODE.str[:-2]
     demux = demux[['SNG.1ST']]
     fname = DEMUXfile+".csv"
+    demux.to_csv(fname,sep=',')
+    print('Your file has been saved as:',fname)
+    
+def format_freemuxlet(FREEMUXfile):
+    """ formats the freemux file to two columns. """
+    demux = pd.read_csv(FREEMUXfile,sep='\t')
+    demux.index = demux.BARCODE.str[:-2]
+    demux = demux[['BEST.GUESS']]
+    demux['BEST.GUESS'] = demux['BEST.GUESS'].str[:1]
+    fname = FREEMUXfile+".bestguess.csv"
+    demux.to_csv(fname,sep=',')
+    print('Your file has been saved as:',fname)
+    demux = pd.read_csv(FREEMUXfile,sep='\t')
+    demux.index = demux.BARCODE.str[:-2]
+    demux = demux[['DROPLET.TYPE']]
+    fname = FREEMUXfile+".droplettype.csv"
     demux.to_csv(fname,sep=',')
     print('Your file has been saved as:',fname)
     
