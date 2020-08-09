@@ -42,6 +42,19 @@ def save(adata,filename):
 def read(filename):
     adata = sc.read_h5ad(filename+".h5ad")
     return(adata)
+
+def get_sig(row,labels):
+    """ get the highest significance value """
+    i = row.index(max(row))
+    return(labels[i])
+
+def z_ratio(row):
+    """ get significance value by zscore difference """
+    row.sort()
+    top1 = row[-1]
+    top2 = row[-2]
+    return(top1-top2)
+
 #######################################################
 ####################################################### Preliminary metadata functions
 #######################################################
