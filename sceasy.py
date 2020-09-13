@@ -89,10 +89,8 @@ def overlay_custom_meta(adata,METAfile,label):
     mfile = pd.read_csv(METAfile,sep=',',index_col=0)
     ###convert to dictionary
     mdict = mfile.to_dict()[mfile.columns[0]]
-    ###check indices
-    adata = adata[adata.obs.barcode.isin(mdict.keys())]
     ###write into .obs
-    adata.obs[label] = adata.obs.apply(lambda row: mdict[row.barcode],axis=1)
+    adata.obs[label] = adata.obs.apply(lambda row: mdict.get(row.barcode),axis=1)
     ###return
     return(adata)
 
