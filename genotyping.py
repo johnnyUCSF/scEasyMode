@@ -5,6 +5,8 @@ import seaborn as sns
 import numpy as np
 import random
 import os
+import ast
+
 
 def format_freemuxvcf(freemuxfile,numsamples):
     ### trim off vcf header for reading
@@ -80,6 +82,21 @@ def get_assigndict(sums_matrix):
 def cleanup():
     os.system('rm freemux.tmp')
     os.system('rm demux.tmp')
+    
+def write_dict(dictfile,dictionary):
+    f = open(dictfile,"w")
+    f.write( str(dictionary) )
+    f.close()
+    ###
+    print('saved as: ',dictfile)
+    
+def read_dict(dictfile):
+    file = open(dictfile,'r')
+    contents = file.read()
+    dictionary = ast.literal_eval(contents)
+    file.close()
+    ###
+    return(dictionary)
     
 def match_demux_freemux(demux_uniq,freemux_uniq):
     ####
