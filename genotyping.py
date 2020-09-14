@@ -77,6 +77,10 @@ def get_assigndict(sums_matrix):
     ##
     return(assign_dict)
 
+def cleanup():
+    os.system('rm freemux.tmp')
+    os.system('rm demux.tmp')
+    
 def match_demux_freemux(demux_uniq,freemux_uniq):
     ####
     sums = len(demux_uniq.columns.tolist())*len(freemux_uniq.columns.tolist())*[0]
@@ -105,6 +109,8 @@ def match_demux_freemux(demux_uniq,freemux_uniq):
     sns.clustermap(sums_matrix,standard_scale=0)
     ### get assignment dictionary
     assign_dict = get_assigndict(sums_matrix)
+    ### cleanup
+    cleanup()
     ### return
     return(assign_dict)
 
