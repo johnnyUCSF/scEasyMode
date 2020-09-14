@@ -121,6 +121,7 @@ def match_demux_freemux(demux_uniq,freemux_uniq):
         sums_matrix.append(tmp_row)
     ### make into df
     sums_matrix = pd.DataFrame(sums_matrix,index=demux_uniq.columns.tolist(),columns=freemux_uniq.columns.tolist())
+    sums_matrix = sums_matrix.transpose()
     ### plot
     sns.clustermap(sums_matrix,standard_scale=0)
     ### get assignment dictionary
