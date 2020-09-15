@@ -522,6 +522,8 @@ def calc_proportions(adata,label='cell_type',treatment='treatment',vehicle='DMSO
         ###divide everything by the vehicle
         results = results.transpose()
         results = results.div(results[vehicle],axis=0)
+        ###scale everything to max
+        results = results/results.max()
         ###
         return results
     
