@@ -1,42 +1,25 @@
 #!/usr/bin/env python3
-"""
-Module pymulti
-"""
 
-__author__ = "Johnny Yu"
-__version__ = "0.1.0"
-__license__ = "MIT"
-
-
-#####################
-#####################
 import pandas as pd
+import gzip
+import sys
 import Bio
+import pickle
+import datetime
+import timeit
+import os
+from collections import Counter
+import numpy as np
+import seaborn as sns
 from Bio import SeqIO
 from Bio.Alphabet import generic_dna
 from Bio.Seq import Seq
-import pickle
-from collections import Counter
-import timeit
-import copy
-import os
 import matplotlib.pyplot as plt
-import numpy as np
-import seaborn as sns
-from scipy.stats import zscore
-from scipy.stats import norm
+from scipy.stats import zscore, norm
 from sklearn.neighbors import DistanceMetric
-import datetime
 from scipy.spatial.distance import hamming
-import gzip
-import sys
-sys.setrecursionlimit(10000)
-#####################
-#####################
 
-#####################
-#####################readin from fastq functions
-#####################
+sys.setrecursionlimit(10000)
 
 def split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge):
     """ this reads in fastq files and definitions of read structure and dumps it as a pickle """
@@ -59,7 +42,7 @@ def split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge):
     ###regular pickle dump
         pickle.dump(reads, open('pymulti/'+sampname+"_reads.p", "wb" ) )
         return(reads)
-    
+
 def read_pickle(sampname,reads,huge):
     """ this reads in the pickle data written from split_rawdata """
     if huge == True:
@@ -91,7 +74,7 @@ def matchby_hamdist(readtable,bcsmulti,bcs10x):
 #     print('finished hamming correction for 10x.',timeit())
 #     ####return
 #     return readtable
-    
+
 def find_closest(searchstr,barcodes,trantab):
     """ finds closest in distance matrix  based on hamming <= 1"""
     if searchstr in barcodes:
@@ -104,8 +87,8 @@ def find_closest(searchstr,barcodes,trantab):
         if dists[i] <= 1:
             return(barcodes[i])
         else:
-            return(searchstr) 
-    
+            return(searchstr)
+
 def make_trantab():
     """ make translation table for encoding """
     intab = 'AGCTN'
@@ -113,7 +96,7 @@ def make_trantab():
     trantab = str.maketrans(intab, outtab)
     ###return
     return(trantab)
-    
+
 def encode_str(searchstr,trantab):
     """ encoding for the string to numeric for faster """
     encoded = np.array([int(d) for d in searchstr.translate(trantab)])
@@ -121,8 +104,8 @@ def encode_str(searchstr,trantab):
     return(encoded)
 
 def fast_hamm(searchstr,barcodes,trantab):
-    """ Make sure that searchstring and searchlist contain equal length of chars before using. 
-        Not going to check in here to make faster. 
+    """ Make sure that searchstring and searchlist contain equal length of chars before using.
+        Not going to check in here to make faster.
         Returns hamming distance matrix """
     full_len = len(searchstr)
     encoded = encode_str(searchstr,trantab)
@@ -150,7 +133,7 @@ def pairwise_hamming(pd_series):
 #####################
 #####################check and filter functions
 #####################
-    
+
 def check_stats(readtable,bcsmulti,bcs10x):
     """ this checks the stats using exact match to multiseq, duplicates, and 10x """
     ####calculate # reads that contain a multiseq barcode
@@ -164,7 +147,7 @@ def check_stats(readtable,bcsmulti,bcs10x):
     tmp = readtable.drop_duplicates()
     duprate = 100*(len(readtable)-len(tmp))/len(readtable)
     print("Duplication rate is: ",duprate)
-    
+
 def filter_readtable(readtable,bcsmulti,bcs10x,gbc_thresh):
     """ this filters the readtable with exact matches """
     ####subset readtable
@@ -189,7 +172,7 @@ def filter_readtable(readtable,bcsmulti,bcs10x,gbc_thresh):
 
 def timeit():
     print(datetime.datetime.now())
-    
+
 #####################
 #####################multiseq correction and cell calling
 #####################
@@ -226,16 +209,16 @@ def correct_cutoffs(pivot,thresh_dict,cut):
     """ reduce to zero based on above distributions """
     pivot = pivot.transpose()
     for barcode in list(pivot.columns):
-        pivot[barcode] = cut.apply(lambda row: 0.0 if row[barcode]<thresh_dict[barcode] 
+        pivot[barcode] = cut.apply(lambda row: 0.0 if row[barcode]<thresh_dict[barcode]
                                    else pivot.loc[row.name][barcode],axis=1)
     pivot = pivot.transpose()
-    
+
 def correct_simple(filtd,sampname,plots=True,thresh=False,pct_only=False,thresh_dict={}):
     """ correct by zscore distributions, plot distributions, and call cells. Saves a file with the calls. """
     ###pre run checks
     pivot = format_multi_table(filtd)
     check_pivot(pivot,sampname)
-    if thresh==True: correct_cutoffs(pivot,thresh_dict,cut=correct_simple(filtd,sampname,thresh=False)) 
+    if thresh==True: correct_cutoffs(pivot,thresh_dict,cut=correct_simple(filtd,sampname,thresh=False))
     ###raw percentiles
     test = pivot+0.01
     test = test/test.sum()
@@ -300,7 +283,7 @@ def correct_median(filtd,sampname,med_factor,plots=True):
 
 def pymulti(R1,R2,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1.6,gbc_thresh=None,sampname='pymulti_',
             split=True,plots=True,hamming=False,thresh=False,pct_only=False,median_only=False,huge=False,bcsmulti=None,reads=None,thresh_dict={}):
-    """ main loop, splits from fastqs and runs through cell calls 
+    """ main loop, splits from fastqs and runs through cell calls
         R1 = your Read1 fastq for the multiseq/hashing fraction
         R2 = your Read2 fastq for the multiseq/hashing fraction
         bcsmulti = your whitelist of known multiseq/hashing barcodes
@@ -341,4 +324,3 @@ def pymulti(R1,R2,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1.6,gbc_th
     else:
         correct_simple(filtd,sampname,plots,thresh,pct_only,thresh_dict)
     return(filtd)
-    

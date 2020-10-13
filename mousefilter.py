@@ -3,26 +3,13 @@
 Module MouseFilter
 """
 
-__author__ = "Johnny Yu"
-__version__ = "0.1.0"
-__license__ = "MIT"
-
-
-#####################
-#####################
 import scanpy as sc
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
-import igraph
-import seaborn as sns
-import seaborn as sb
 import os
-#####################
-#####################
 
 def main(mousefile,humanfile=None,cutoff_top=0.5,cutoff_bottom=0.5,objects=False):
-    """ Returns truemouse and truehuman Anndata objects filtered by cutoff of % mouse genes 
+    """ Returns truemouse and truehuman Anndata objects filtered by cutoff of % mouse genes
         mousefile = the raw anndata object that has been aligned to mm10hg19 (or something equivalent)
         humanfile = the raw anndata object that has been aligned to human only
         cutoff = the threshold of % mouse genes that is used to group cells as mouse or human
@@ -45,7 +32,7 @@ def main(mousefile,humanfile=None,cutoff_top=0.5,cutoff_bottom=0.5,objects=False
     ###return anndata objects for each species
     write_anndata(truemouse,truehuman)
     return(truemouse,truehuman)
-    
+
 def check_inputs(mousefile,humanfile,cutoff_top,cutoff_bottom):
     """ Make sure you have two matrices: one from mouse, one from human. mouse should be aligned to mm10hg19 and human should be hg38 """
     if cutoff_top > 1 or cutoff_top < 0:
@@ -58,7 +45,7 @@ def check_inputs(mousefile,humanfile,cutoff_top,cutoff_bottom):
             sc.read_10x_h5(humanfile)
     except:
         print('the files are not readable as h5.')
-    
+
 def read_files(mousefile,humanfile):
     """ Read into anndata objects and return """
     mouse = sc.read_10x_h5(mousefile)
@@ -76,7 +63,7 @@ def process_mouse(mouse):
     ### for each cell compute fraction of counts in mouse genes vs. all genes
     mouse.obs['percent_mouse'] = np.sum(
         mouse[:, mouse_genes].X, axis=1).A1 / np.sum(mouse.X, axis=1).A1
-    ### add the total counts per cell as observations-annotation 
+    ### add the total counts per cell as observations-annotation
     mouse.obs['n_counts'] = np.sum(mouse.X, axis=1).A1
 
 def plot_mouse(mouse):
@@ -105,7 +92,7 @@ def filter_mouse(mouse,cutoff_top,cutoff_bottom):
     with open('CellsBySpecies/mousecells.txt', 'w') as filehandle:
         filehandle.writelines("%s\n" % cell for cell in mousecells)
     with open('CellsBySpecies/humancells.txt', 'w') as filehandle:
-        filehandle.writelines("%s\n" % cell for cell in humancells)      
+        filehandle.writelines("%s\n" % cell for cell in humancells)
     ####return anndata objects
     return(truemouse,truehuman)
 
@@ -124,8 +111,7 @@ def write_anndata(truemouse,truehuman):
     os.system('mkdir DataBySpecies')
     truemouse.write("DataBySpecies/mouse.anndata.h5ad")
     truehuman.write("DataBySpecies/human.anndata.h5ad")
-    
+
 if __name__ == "__main__":
     """ This is executed when run from the command line """
     main(mousefile,humanfile,cutoff)
-    

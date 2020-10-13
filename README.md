@@ -9,7 +9,7 @@
 ## Installation
 Install the package using the Github extension of Pip:
 ```sh
-pip3 install -e git+https://github.com/johnnyUCSF/scEasyMode#egg=scEasyMode
+pip3 install git+https://github.com/johnnyUCSF/scEasyMode#egg='scEasyMode'
 ```
 
 ## Usage
