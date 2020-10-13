@@ -48,7 +48,10 @@ def split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge,base_start=0):
             ####extract info from reads
             bc_10x = str(record1.seq[:len_10x])
             umi = str(record1.seq[len_10x:(len_10x+len_umi)])
-            r2 = str(record2.seq[base_start:base_start+len_multi])
+            if len_multi==None:
+                r2 = str(record2.seq[base_start:len_multi])
+            else:
+                r2 = str(record2.seq[base_start:base_start+len_multi])
             ####write in
             reads.append([bc_10x,umi,r2])
     ###if huge file, then use joblib (pickle crashes)
