@@ -1,0 +1,8 @@
+scanpy
+pandas
+matplotlib
+igraph
+seaborn
+biopython==1.70
+scipy
+sklearn
