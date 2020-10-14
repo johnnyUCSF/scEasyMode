@@ -19,7 +19,7 @@ from scipy.spatial.distance import hamming
 
 sys.setrecursionlimit(10000)
 
-def split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge):
+def split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge,base_start=0):
     """ this reads in fastq files and definitions of read structure and dumps it as a pickle """
     ###store paired end reads
     reads = []
@@ -29,7 +29,10 @@ def split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge):
             ####extract info from reads
             bc_10x = str(record1.seq[:len_10x])
             umi = str(record1.seq[len_10x:(len_10x+len_umi)])
-            r2 = str(record2.seq[:len_multi])
+            if len_multi==None:
+                r2 = str(record2.seq[base_start:len_multi])
+            else:
+                r2 = str(record2.seq[base_start:base_start+len_multi])
             ####write in
             reads.append([bc_10x,umi,r2])
     ###if huge file, then use joblib (pickle crashes)
@@ -279,7 +282,7 @@ def correct_median(filtd,sampname,med_factor,plots=True):
 #####################main function
 #####################
 
-def pymulti(R1,R2,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1.6,gbc_thresh=None,sampname='pymulti_',
+def pymulti(R1,R2,bcs10x,len_10x=16,len_umi=12,len_multi=8,base_start=0,med_factor=1.6,gbc_thresh=None,sampname='pymulti_',
             split=True,plots=True,hamming=False,thresh=False,pct_only=False,median_only=False,huge=False,bcsmulti=None,reads=None,thresh_dict={}):
     """ main loop, splits from fastqs and runs through cell calls
         R1 = your Read1 fastq for the multiseq/hashing fraction
@@ -303,7 +306,7 @@ def pymulti(R1,R2,bcs10x,len_10x=16,len_umi=12,len_multi=8,med_factor=1.6,gbc_th
     if huge == True: print('assuming huge fastqs.')
     ###split fastqs and pickle
     os.system('mkdir pymulti')
-    if split == True: reads = split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge=huge)
+    if split == True: reads = split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge=huge,base_start=base_start)
     ###read in old pickle data
     readtable = read_pickle(sampname,reads=reads,huge=huge)
     #####check duplication multi and 10x rates
