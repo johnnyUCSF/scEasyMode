@@ -12,8 +12,6 @@ from collections import Counter
 import numpy as np
 import seaborn as sns
 from Bio import SeqIO
-from Bio.Alphabet import generic_dna
-from Bio.Seq import Seq
 import matplotlib.pyplot as plt
 from scipy.stats import zscore, norm
 from sklearn.neighbors import DistanceMetric

@@ -2,6 +2,6 @@ scanpy
 pandas
 matplotlib
 seaborn
-biopython==1.70
+biopython
 scipy
 sklearn

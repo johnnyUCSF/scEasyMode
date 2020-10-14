@@ -213,7 +213,7 @@ def qcgenes(adata,threshold=1000):
 def cellcycle(adata,mouse):
     adata.var_names_make_unique()
     ##Score cell cycle and visualize the effect:
-    cell_cycle_genes = [x.strip() for x in open('scEasyMode/regev_lab_cell_cycle_genes.txt')]
+    cell_cycle_genes = [x.strip() for x in open('scEasyMode/resources/regev_lab_cell_cycle_genes.txt')]
     s_genes = cell_cycle_genes[:43]
     g2m_genes = cell_cycle_genes[43:]
     ##add labels for mouse genes
