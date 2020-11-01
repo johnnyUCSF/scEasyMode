@@ -214,7 +214,7 @@ def correct_cutoffs(pivot,thresh_dict,cut):
                                    else pivot.loc[row.name][barcode],axis=1)
     pivot = pivot.transpose()
 
-def correct_simple(filtd,sampname,plots=True,thresh=False,pct_only=False,thresh_dict={}):
+def correct_simple(filtd,sampname, plots=True,thresh=False,pct_only=False,thresh_dict={}, filter_unmapped_reads=True):
     """ correct by zscore distributions, plot distributions, and call cells. Saves a file with the calls. """
     ###pre run checks
     pivot = format_multi_table(filtd)
@@ -244,13 +244,24 @@ def correct_simple(filtd,sampname,plots=True,thresh=False,pct_only=False,thresh_
     new = test.copy()
     new['call'] = test.apply(lambda row: get_sig(list(row),list(test.columns)),axis=1)
     new['sig'] = test.apply(lambda row: z_ratio(list(row)),axis=1)
+    
+    if filter_unmapped_reads:
+        old_len = len(new)
+        column_names = new.columns
+        result_columns = ['cell', 'call', 'sig']
+    
+        barcodes = [x for x in column_names if x not in result_columns]
+        new = new[new[barcodes].sum(axis=1) != 0]
+        new_len = len(new)
+        print('Removed {} cells that were not mapped to any provided barcode.'.format(old_len - new_len))
+    
     # save
     print('saving file ',sampname)
     new.to_csv('pymulti/'+sampname+'_calls.tsv',sep='\t')
     # return in the event of multiple iterations of corrections
     return(test)
 
-def correct_median(filtd,sampname,med_factor,plots=True):
+def correct_median(filtd,sampname, med_factor, plots=True, filter_unmapped_reads=True):
     # pre run checks
     pivot = format_multi_table(filtd)
     check_pivot(pivot,sampname)
@@ -272,18 +283,31 @@ def correct_median(filtd,sampname,med_factor,plots=True):
     new = test.copy()
     new['call'] = test.apply(lambda row: get_sig(list(row),list(test.columns)),axis=1)
     new['sig'] = test.apply(lambda row: z_ratio(list(row)),axis=1)
-    ###save
+    
+    # filter unmapped reads
+    
+    if filter_unmapped_reads:
+        old_len = len(new)
+        column_names = new.columns
+        result_columns = ['cell', 'call', 'sig']
+    
+        barcodes = [x for x in column_names if x not in result_columns]
+        new = new[new[barcodes].sum(axis=1) != 0]
+        new_len = len(new)
+        print('Removed {} cells that were not mapped to any provided barcode.'.format(old_len - new_len))
+     
+    # save
     new.to_csv('pymulti/'+sampname+'_calls.tsv',sep='\t')
-    ###return in the event of multiple iterations of corrections
+    # return in the event of multiple iterations of corrections
     return(test)
-
 
 '''
 main function
 '''
 
-def pymulti(R1,R2,bcs10x,len_10x=16,len_umi=12,len_multi=8,base_start=0,med_factor=1.6,gbc_thresh=None,sampname='pymulti_',
-            split=True,plots=True,hamming=False,thresh=False,pct_only=False,median_only=False,huge=False,bcsmulti=None,reads=None,thresh_dict={}):
+def pymulti(R1,R2,bcs10x, len_10x=16, len_umi=12, len_multi=8, base_start=0, med_factor=1.6, gbc_thresh=None, sampname='pymulti_',
+            split=True, plots=True, hamming=False, thresh=False, pct_only=False, median_only=False, huge=False, bcsmulti=None,
+            reads=None, thresh_dict={}, filter_unmapped_reads=True):
     """ 
     main loop, splits from fastqs and runs through cell calls
         R1 = your Read1 fastq for the multiseq/hashing fraction
@@ -325,7 +349,7 @@ def pymulti(R1,R2,bcs10x,len_10x=16,len_umi=12,len_multi=8,base_start=0,med_fact
     filtd = filter_readtable(readtable,bcsmulti,bcs10x,gbc_thresh)
     ####implement multiseq correction by within distribution zscores
     if median_only == True:
-        correct_median(filtd,sampname,med_factor,plots)
+        correct_median(filtd, sampname, med_factor, plots, filter_unmapped_reads=filter_unmapped_reads)
     else:
-        correct_simple(filtd,sampname,plots,thresh,pct_only,thresh_dict)
+        correct_simple(filtd, sampname, plots, thresh, pct_only, thresh_dict, filter_unmapped_reads=filter_unmapped_reads)
     return(filtd)
