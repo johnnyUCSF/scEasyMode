@@ -57,9 +57,9 @@ def read_pickle(sampname,reads,huge):
     ####return
     return(readtable)
 
-#####################
-#####################sequencing cleanup functions
-#####################
+'''
+sequencing cleanup functions
+'''
 
 def matchby_hamdist(readtable,bcsmulti,bcs10x):
     """ hamming distance on barcodes. runs in roughly N time. hamming for 10x barcodes takes a long time. """
@@ -131,9 +131,9 @@ def pairwise_hamming(pd_series):
     ###return
     return(dist,closest)
 
-#####################
-#####################check and filter functions
-#####################
+'''
+check and filter functions
+'''
 
 def check_stats(readtable,bcsmulti,bcs10x):
     """ this checks the stats using exact match to multiseq, duplicates, and 10x """
@@ -174,9 +174,9 @@ def filter_readtable(readtable,bcsmulti,bcs10x,gbc_thresh):
 def timeit():
     print(datetime.datetime.now())
 
-#####################
-#####################multiseq correction and cell calling
-#####################
+'''
+multiseq correction and cell calling
+'''
 
 def get_sig(row,labels):
     """ get the highest significance value """
@@ -233,28 +233,28 @@ def correct_simple(filtd,sampname,plots=True,thresh=False,pct_only=False,thresh_
         test = test.transpose().apply(zscore)
     else:
         test = test.transpose()
-    ####plot distributions
+    # plot distributions
     if plots==True:
         for pop in list(test.columns):
             plt.figure()
             test[pop].hist(bins=100,color=np.random.rand(3,))
             plt.title(pop)
             plt.xlim(-5,5)
-    ####get significance value and call cells
+    # get significance value and call cells
     new = test.copy()
     new['call'] = test.apply(lambda row: get_sig(list(row),list(test.columns)),axis=1)
     new['sig'] = test.apply(lambda row: z_ratio(list(row)),axis=1)
-    ###save
+    # save
     print('saving file ',sampname)
     new.to_csv('pymulti/'+sampname+'_calls.tsv',sep='\t')
-    ###return in the event of multiple iterations of corrections
+    # return in the event of multiple iterations of corrections
     return(test)
 
 def correct_median(filtd,sampname,med_factor,plots=True):
-    ###pre run checks
+    # pre run checks
     pivot = format_multi_table(filtd)
     check_pivot(pivot,sampname)
-    ###subtract the median multiplied by the factor for each barcode (ie remove background)
+    # subtract the median multiplied by the factor for each barcode (ie remove background)
     testmed = pivot.transpose()-med_factor*(pivot.transpose().apply(np.median))
     ###formatting, set negatives to zero
     testmed = testmed.transpose()
@@ -278,13 +278,14 @@ def correct_median(filtd,sampname,med_factor,plots=True):
     return(test)
 
 
-#####################
-#####################main function
-#####################
+'''
+main function
+'''
 
 def pymulti(R1,R2,bcs10x,len_10x=16,len_umi=12,len_multi=8,base_start=0,med_factor=1.6,gbc_thresh=None,sampname='pymulti_',
             split=True,plots=True,hamming=False,thresh=False,pct_only=False,median_only=False,huge=False,bcsmulti=None,reads=None,thresh_dict={}):
-    """ main loop, splits from fastqs and runs through cell calls
+    """ 
+    main loop, splits from fastqs and runs through cell calls
         R1 = your Read1 fastq for the multiseq/hashing fraction
         R2 = your Read2 fastq for the multiseq/hashing fraction
         bcsmulti = your whitelist of known multiseq/hashing barcodes
@@ -301,25 +302,26 @@ def pymulti(R1,R2,bcs10x,len_10x=16,len_umi=12,len_multi=8,base_start=0,med_fact
         median_only = True if you want to use the median correction method
         huge = True if your file is huge in which case it will be saved as an h5 file instead of pickling
         thresh_dict = a dictionary of barcodes:threshold which will be used to gate reads on the samples
+        
     """
     ###
     if huge == True: print('assuming huge fastqs.')
-    ###split fastqs and pickle
+    # split fastqs and pickle
     if not os.path.isdir('./pymulti'):
         os.mkdir('pymulti')
     
     if split == True: reads = split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge=huge,base_start=base_start)
-    ###read in old pickle data
+    # read in old pickle data
     readtable = read_pickle(sampname,reads=reads,huge=huge)
     #####check duplication multi and 10x rates
     multirate = check_stats(readtable,bcsmulti,bcs10x)
-    ####match by hamming distance
+    # match by hamming distance
     if hamming == True:
         readtable.drop_duplicates(inplace=True)
         matchby_hamdist(readtable,bcsmulti,bcs10x)
         #####check duplication multi and 10x rates
         multirate = check_stats(readtable,bcsmulti,bcs10x)
-    ####filter readtable
+    # filter readtable
     filtd = filter_readtable(readtable,bcsmulti,bcs10x,gbc_thresh)
     ####implement multiseq correction by within distribution zscores
     if median_only == True:
