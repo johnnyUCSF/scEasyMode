@@ -305,7 +305,9 @@ def pymulti(R1,R2,bcs10x,len_10x=16,len_umi=12,len_multi=8,base_start=0,med_fact
     ###
     if huge == True: print('assuming huge fastqs.')
     ###split fastqs and pickle
-    os.system('mkdir pymulti')
+    if not os.path.isdir('./pymulti'):
+        os.mkdir('pymulti')
+    
     if split == True: reads = split_rawdata(R1,R2,len_10x,len_umi,len_multi,sampname,huge=huge,base_start=base_start)
     ###read in old pickle data
     readtable = read_pickle(sampname,reads=reads,huge=huge)
