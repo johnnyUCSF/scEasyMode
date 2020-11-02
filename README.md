@@ -13,20 +13,14 @@ pip3 install git+https://github.com/johnnyUCSF/scEasyMode#egg='scEasyMode'
 ```
 
 - You may also use Conda to start an environment with ScEasyMode installed inside it. You can install conda from [here.](https://docs.anaconda.com/anaconda/install/)
+- Firstly, clone the repository and create the environment as shown below. Then, activate the environment.
 ```sh
-'''
-Firstly, clone the repository and create the environment as shown below.
-Then, activate the environment.
-'''
 git clone https://github.com/johnnyUCSF/scEasyMode
 cd scEasyMode
 conda env create -f environment.yml
 conda activate sceasymode_env
-'''
-Now start your Jupyter Notebook or Python shell
-inside the conda environment
-'''
 ```
+- Now start your Jupyter Notebook or Python shell inside the conda environment
 
 ## Usage
 ### Load the modules
