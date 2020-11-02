@@ -46,6 +46,11 @@ bcsmulti = pd.read_csv(multi_BC_file,sep=',',index_col=1,header=None)
 bcsmulti.columns = ['multi']
 bcsmulti = bcsmulti['multi'].tolist()
 
-pymulti.pymulti(fastq_r1, fastq_r2, bcsmulti=bcsmulti, bcs10x=cell_bcs, len_10x=len_10x, len_multi=len_multi, 
-                len_umi=len_umi, split=True, hamming=True, median_only=True, sampname= sample_name)
+pymulti.pymulti(fastq_r1, fastq_r2, bcsmulti=bcsmulti, bcs10x=cell_bcs, 
+                len_10x=len_10x, len_multi=len_multi, len_umi=len_umi, split=True, 
+                hamming=True, median_only=True, sampname= sample_name,  filter_unmapped_reads=True)
+                
+# This function will output multiple graphs
+# It will also store a matrix of the assigned barcodes in the 'pymulti' directory inside the working directory.
+# Note that some reads are unmapped. If you want to retain them, you can do so by specifying filter_unmapped_reads=False.
 ```
