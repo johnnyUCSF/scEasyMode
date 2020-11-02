@@ -7,19 +7,22 @@
 - Scanpy wrapper that simplifies the workflow
 
 ## Installation
-- Install the package using the Github extension of Pip:
+<b> Install using Pip </b>
 ```sh
 pip3 install git+https://github.com/johnnyUCSF/scEasyMode#egg='scEasyMode'
 ```
 
+<b> Install using a Conda Environment </b>
 - You may also use Conda to start an environment with ScEasyMode installed inside it. You can install conda from [here.](https://docs.anaconda.com/anaconda/install/)
 - Firstly, clone the repository and create the environment as shown below. Then, activate the environment.
+
 ```sh
 git clone https://github.com/johnnyUCSF/scEasyMode
 cd scEasyMode
 conda env create -f environment.yml
 conda activate sceasymode_env
 ```
+
 - Now start your Jupyter Notebook or Python shell inside the conda environment
 
 ## Usage
