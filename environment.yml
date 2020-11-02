@@ -1,0 +1,17 @@
+name: sceasymode_env
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.8
+  - pip
+  - pandas
+  - matplotlib
+  - scipy
+  - scikit-learn
+  - seaborn
+  - biopython
+  - scanpy
+  - pip:
+    - git+https://github.com/johnnyUCSF/scEasyMode
