@@ -1,0 +1,7 @@
+scanpy
+pandas
+matplotlib
+seaborn
+biopython
+scipy
+sklearn

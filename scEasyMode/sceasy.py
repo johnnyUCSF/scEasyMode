@@ -1,31 +1,13 @@
 #!/usr/bin/env python3
-"""
-Module sceasy
-"""
 
-__author__ = "Johnny Yu"
-__version__ = "0.1.0"
-__license__ = "MIT"
-
-
-#####################
-#####################
 import pandas as pd
-import copy
-import os
-import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import scanpy as sc
 from datetime import datetime
 from scipy import stats
+import matplotlib.pyplot as plt
 from scipy.stats.mstats import gmean
-#####################
-#####################
-
-#######################################################
-####################################################### IO functions
-#######################################################
 
 def read_species(human=True):
     """ Returns either the human or mouse anndata object
@@ -58,13 +40,13 @@ def z_ratio(row):
 #######################################################
 ####################################################### Preliminary metadata functions
 #######################################################
-    
+
 def overlay_meta(adata,LMOfile,PYMULTIfile):
-    """ Automatically overlays the metadata from multiseq to the single cell dataset. 
+    """ Automatically overlays the metadata from multiseq to the single cell dataset.
         adata = the anndata object
         LMOfile = the file mapping the cell hashing/multiseq indices to the sample identifiers
         sampname = the sample name that has been used to save files as the prefix
-        
+
         Returns an anndata object with metadata from the LMOfile overlaid
     """
     ###get barcodes
@@ -76,7 +58,7 @@ def overlay_meta(adata,LMOfile,PYMULTIfile):
     adata = adata[adata.obs.barcode.isin(sig.keys())]
     adata = adata[adata.obs.barcode.isin(call.keys())]
     ###write into .obs
-    adata.obs['sig'] = adata.obs.apply(lambda row: sig[row.barcode],axis=1) 
+    adata.obs['sig'] = adata.obs.apply(lambda row: sig[row.barcode],axis=1)
     adata.obs['call'] = adata.obs.apply(lambda row: call[row.barcode],axis=1)
     ###write sample name into .obs
     adata.obs['sample'] = adata.obs.apply(lambda row: LMOdict[row.call],axis=1)
@@ -132,7 +114,7 @@ def overlay_demux_freemux(adata):
     newdict = new.demux.to_dict()
     adata.obs['cell_match'] = adata.obs.apply(lambda row: newdict[row.freemux],axis=1)
     return(adata)
-    
+
 def format_demuxlet(DEMUXfile):
     """ formats the demuxlet file to two columns. """
     demux = pd.read_csv(DEMUXfile,sep='\t')
@@ -141,7 +123,7 @@ def format_demuxlet(DEMUXfile):
     fname = DEMUXfile+".csv"
     demux.to_csv(fname,sep=',')
     print('Your file has been saved as:',fname)
-    
+
 def format_freemuxlet(FREEMUXfile):
     """ formats the freemux file to two columns. """
     demux = pd.read_csv(FREEMUXfile,sep='\t')
@@ -157,9 +139,9 @@ def format_freemuxlet(FREEMUXfile):
     fname = FREEMUXfile+".droplettype.csv"
     demux.to_csv(fname,sep=',')
     print('Your file has been saved as:',fname)
-    
+
 def get_LMOfile(LMOfile):
-    """ read in LMOfile and turn into dictionary. 
+    """ read in LMOfile and turn into dictionary.
         using the multiseq barcode sequence as the keys. """
     bcsmulti = pd.read_csv(LMOfile,sep=',',index_col=0,header=None)
     bcsmulti.columns = ['multi']
@@ -203,7 +185,7 @@ def qcplots(adata):
         sc.pl.scatter(adata[adata.obs['n_counts']<10000], 'n_counts', 'n_genes', color=color)
         sc.pl.scatter(adata[adata.obs['n_counts']<5000], 'n_counts', 'n_genes', color=color)
         sc.pl.scatter(adata[adata.obs['n_counts']<2500], 'n_counts', 'n_genes', color=color)
-        
+
 def qccheck(adata,suppress_plots,MT_prefix='MT-'):
     adata = qcstats(adata,MT_prefix)
     if suppress_plots == False:
@@ -231,7 +213,7 @@ def qcgenes(adata,threshold=1000):
 def cellcycle(adata,mouse):
     adata.var_names_make_unique()
     ##Score cell cycle and visualize the effect:
-    cell_cycle_genes = [x.strip() for x in open('scEasyMode/regev_lab_cell_cycle_genes.txt')]
+    cell_cycle_genes = [x.strip() for x in open('scEasyMode/resources/regev_lab_cell_cycle_genes.txt')]
     s_genes = cell_cycle_genes[:43]
     g2m_genes = cell_cycle_genes[43:]
     ##add labels for mouse genes
@@ -248,7 +230,7 @@ def qc_all(adata,suppress_plots=False,mouse=False):
         Checks mitochondrial genes, number of genes, and number of counts
         adata = the anndata object to operate on
         suppress_plots = True if you want to just do the qc without all the plots
-        
+
         Returns formatted anndata object.
     """
     ###qc
@@ -309,7 +291,7 @@ def filters(adata,mt_thresh,min_cells,min_counts,max_counts,min_genes,sig_gbc=Fa
         min_genes = the number of genes that a cell must have to keep
         get_hvgs = select HVGs in preparation for downstream clustering
         sig_pct = the percentile of which to remove cells based on the multiseq/hashing
-        
+
         Returns two formatted anndata objects. The first one is the original without mitochondrial gene filtering, the second one is the one with mitochondrial gene filtering.
     """
     ###annotate dead cells in full data set
@@ -360,7 +342,7 @@ def visualize(adata,covariates=['n_counts','n_genes','mt_frac','phase','sample',
         res = the resolution for louvain clustering (higher is more discrete clusters)
         bbknn = True if you want to use bbknn normalization as a batch correction measure
         suppress_plots = True if you just want to calculate the visualizations without all the plots
-    
+
         Returns an anndata object with all the calculations built in for plotting.
     """
     ###Calculate the visualizations
@@ -394,19 +376,19 @@ def cluster(adata,res):
     return(adata)
 
 def densitymap(adata,sample_key='sample'):
-    """ Plots the density of samples across umap space 
+    """ Plots the density of samples across umap space
         adata = anndata object to act on
         key = the key on which to split the dataset and visualize samples individually.
-        
+
         Returns a plot to the interpreter.
-    """ 
+    """
     sc.tl.embedding_density(adata, basis='umap', groupby=sample_key)
     sc.pl.embedding_density(adata, basis='umap', key='umap_density_'+sample_key)
 
 def classify(df,label,newlabel,classifier):
     df[newlabel] = df.apply(lambda row: lambda_classify(row[label],classifier) ,axis=1)
     return(df)
-    
+
 def lambda_classify(search,classifier):
     if search in classifier:
         return('yes')
@@ -431,7 +413,7 @@ def metacell_bylabel(scobject,label,zscore=True):
     if zscore == True:
         merged = pd.DataFrame(stats.zscore(merged),index=clusters,columns=scobject.var.index.tolist())
     ###return
-    return(merged)  
+    return(merged)
 
 #######################################################
 ####################################################### Demuxlet correction
@@ -450,7 +432,7 @@ def correct_demuxlet(adata,cutoff=0.7,label='cell_type'):
         ##calculate proportions
         props = clustdf.groupby(label).count()['barcode']/(len(clustdf))
         ##see if majority based on cutoff
-        majorcell = props[props>cutoff].index.tolist() 
+        majorcell = props[props>cutoff].index.tolist()
         ##change all cell_type values to the most abundant value
         cells = clustdf.index.tolist()
         if len(majorcell) == 1:
@@ -466,7 +448,7 @@ def correct_demuxlet(adata,cutoff=0.7,label='cell_type'):
     adata = adata[adata.obs[label]!='delete']
     ###return object
     return(adata)
-    
+
 def replace_celltypes(celldict,row,label):
     """ Replaces cell type with max celltype in anndata object, but preserves original call if no max cell type is found. """
     if row['leiden'] in celldict:
@@ -526,7 +508,7 @@ def calc_proportions(adata,label='cell_type',treatment='treatment',vehicle='DMSO
         results = results/results.max()
         ###
         return results
-    
+
 def plot_fitness(fitness):
     ###plot fitness scores
     palette = sns.color_palette("Purples_d",n_colors=int(len(fitness)*1.3))
@@ -547,7 +529,7 @@ def plot_fitness(fitness):
         plt.xlabel('Cell Type')
         plt.tight_layout()
         plt.savefig('figures/'+treatment+'.pdf',dpi=200)
-    
+
 def get_PT_path(indata,timelabel,origin_group,dcN,min_search=True,fit_genes=True):
     """ Does the heavy lifting on pseudotime calculation after you define the axis you want to search on. Also fits linear model to predict genes along PT trajectory. """
     #####this is a particular DC. You mustknow the one you want prior.
@@ -556,14 +538,14 @@ def get_PT_path(indata,timelabel,origin_group,dcN,min_search=True,fit_genes=True
     adata = indata.copy()
     # adata.var.drop(labels=['n_cells'],inplace=True,axis=1)
     sc.pp.filter_genes(adata, min_counts=countsN)
-    adata.X[adata.X<0] = 0 
+    adata.X[adata.X<0] = 0
     print(adata.shape,'finding root cell ',datetime.now())
     #Find the T0 cell with the lowest/highest DC1 value to act as root for the diffusion pseudotime and compute DPT
     stem_mask = np.isin(adata.obs[timelabel], origin_group)
     if min_search == True:
         max_stem_id = np.argmin(adata.obsm['X_diffmap'][stem_mask,dcN])
     else:
-        max_stem_id = np.argmax(adata.obsm['X_diffmap'][stem_mask,dcN])    
+        max_stem_id = np.argmax(adata.obsm['X_diffmap'][stem_mask,dcN])
     root_id = np.arange(len(stem_mask))[stem_mask][max_stem_id]
     adata.uns['iroot'] = root_id
     #Compute dpt
@@ -579,7 +561,7 @@ def get_PT_path(indata,timelabel,origin_group,dcN,min_search=True,fit_genes=True
         reg = linear_model.RidgeCV(alphas=np.array([1.e-6, 1.e-5, 1.e-4, 1.e-3, 1.e-2, 1.e-1, 1.e+0, 1.e+1,1.e+2, 1.e+3, 1.e+4, 1.e+5, 1.e+6]),
                                    cv=None, fit_intercept=True, normalize=True,
                                    scoring=None, store_cv_values=False)
-        reg.fit(x,y)       
+        reg.fit(x,y)
         ###print metrics
         print(reg.score(x,y),reg.intercept_)
         ###save values to new gene list
@@ -598,22 +580,22 @@ def get_PT_path(indata,timelabel,origin_group,dcN,min_search=True,fit_genes=True
     sc.pl.diffmap(adata, components='1,2', color='dpt_pseudotime')
     sc.pl.diffmap(adata, components='1,2', color=timelabel)
     sc.pl.diffmap(adata, components='1,2', color='phase')
-    ###returns the pseudotime calculated df 
+    ###returns the pseudotime calculated df
     return(adata,dp1genes)
-    
+
 def vis_pseudostable(adata):
     """ Histogram across PT state to allow definition of pseudotime """
     # Density Plot and Histogram of all arrival delays
     plt.figure(figsize=(15, 15))
-    sns.distplot(adata.obs.dpt_pseudotime, hist=True, kde=True, 
-                 bins=int(len(adata)/20), color = 'darkblue', 
+    sns.distplot(adata.obs.dpt_pseudotime, hist=True, kde=True,
+                 bins=int(len(adata)/20), color = 'darkblue',
                  hist_kws={'edgecolor':'black'},
                  kde_kws={'linewidth': 4})
     plt.xlim(-0.1,1.1)
     plt.yscale('log',nonposy='clip')
     plt.ylim(0.09,10**2)
-    
-    
+
+
 def vis_pseudostable_covariates(adata,metadata):
     """ Histogram across PT state to allow definition of pseudotime overlaid with the covariates you want to see. """
     plt.figure(figsize=(15, 15))
@@ -638,10 +620,10 @@ def categorize_pseudostable(adata,PT_label,states):
     """ Once pseudotimes have been calculated, takes a user defined list of cutoffs between 0 and 1 to categorize cells into pseudostates. """
     adata.obs['pseudostate'] = adata.obs.apply(lambda row: lambda_categorize(row[PT_label],states),axis=1)
     return(adata)
-    
+
 def lambda_categorize(PT,states):
     i = 1
     for cutoff in states:
         if PT <= cutoff:
-             return(str(i))   
-        i+=1    
+             return(str(i))
+        i+=1
