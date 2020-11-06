@@ -9,7 +9,7 @@
 ## Installation
 <b> Install using Pip </b>
 ```sh
-pip3 install git+https://github.com/johnnyUCSF/scEasyMode#egg='scEasyMode'
+pip3 install scEasyMode
 ```
 
 <b> Install using a Conda Environment </b>

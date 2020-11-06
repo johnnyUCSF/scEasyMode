@@ -13,8 +13,8 @@ requirements = parse_requirements("requirements.txt")
 print("REQUIREMENTS: ", requirements)
 
 setup(
-    name="ScEasyMode",
-    version="1.0.0",
+    name="scEasyMode",
+    version="1.0.1",
     author="Johnny Yu",
     author_email="johnny.yu@ucsf.edu",
     description="Wrappers for automating single cell workflows in python",
@@ -25,7 +25,7 @@ setup(
     install_requires=requirements,
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: MIT License",
+        "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
