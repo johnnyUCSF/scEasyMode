@@ -14,7 +14,7 @@ print("REQUIREMENTS: ", requirements)
 
 setup(
     name="ScEasyMode",
-    version="0.1.0",
+    version="1.0.0",
     author="Johnny Yu",
     author_email="johnny.yu@ucsf.edu",
     description="Wrappers for automating single cell workflows in python",
